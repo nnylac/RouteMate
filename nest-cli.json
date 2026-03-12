@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/api-gateway/src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/api-gateway",
+  "projects": {
+    "api-gateway": {
+      "type": "application",
+      "root": "apps/api-gateway",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-gateway/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
+      }
+    },
+    "card-orchestrator-service": {
+      "type": "application",
+      "root": "apps/card-orchestrator-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/card-orchestrator-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/card-orchestrator-service/tsconfig.app.json"
+      }
+    },
+    "card-service": {
+      "type": "application",
+      "root": "apps/card-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/card-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/card-service/tsconfig.app.json"
+      }
+    },
+    "fare-comparison-service": {
+      "type": "application",
+      "root": "apps/fare-comparison-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/fare-comparison-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/fare-comparison-service/tsconfig.app.json"
+      }
+    },
+    "fare-service": {
+      "type": "application",
+      "root": "apps/fare-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/fare-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/fare-service/tsconfig.app.json"
+      }
+    },
+    "maps-wrapper-service": {
+      "type": "application",
+      "root": "apps/maps-wrapper-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/maps-wrapper-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/maps-wrapper-service/tsconfig.app.json"
+      }
+    },
+    "notification-service": {
+      "type": "application",
+      "root": "apps/notification-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/notification-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/notification-service/tsconfig.app.json"
+      }
+    },
+    "payment-wrapper-service": {
+      "type": "application",
+      "root": "apps/payment-wrapper-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/payment-wrapper-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/payment-wrapper-service/tsconfig.app.json"
+      }
+    },
+    "route-service": {
+      "type": "application",
+      "root": "apps/route-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/route-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/route-service/tsconfig.app.json"
+      }
+    },
+    "transaction-service": {
+      "type": "application",
+      "root": "apps/transaction-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/transaction-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/transaction-service/tsconfig.app.json"
+      }
+    }
+  }
+}
