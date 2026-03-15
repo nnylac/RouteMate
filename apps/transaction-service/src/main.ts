@@ -3,6 +3,6 @@ import { TransactionServiceModule } from './transaction-service.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(TransactionServiceModule);
-  await app.listen(process.env.port ?? 3009);
+  await app.listen(process.env.port ?? 3011);
 }
 bootstrap();

@@ -12,7 +12,6 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/apps/api-gateway/main",
-
     "start:card-orchestrator-service": "nest start card-orchestrator-service --watch",
     "start:card-service": "nest start card-service --watch",
     "start:fare-comparison-service": "nest start fare-comparison-service --watch",
@@ -21,8 +20,13 @@
     "start:notification-service": "nest start notification-service --watch",
     "start:payment-wrapper-service": "nest start payment-wrapper-service --watch",
     "start:transaction-service": "nest start transaction-service --watch",
-    "start:all": "concurrently \"npm run start\" \"npm run start:card-orchestrator-service\" \"npm run start:card-service\" \"npm run start:fare-comparison-service\" \"npm run start:fare-service\" \"npm run start:maps-wrapper-service\" \"npm run start:notification-service\" \"npm run start:payment-wrapper-service\" \"npm run start:transaction-service\"",
-    
+    "start:ride-hailing-aggregator-service": "nest start ride-hailing-aggregator-service --watch",
+    "start:ride-hailing-wrapper-service": "nest start ride-hailing-wrapper-service --watch",
+    "start:route-cache-service": "nest start route-cache-service --watch",
+    "start:user-service": "nest start user-service --watch",
+    "start:arrival-timing-service": "nest start arrival-timing-service --watch",
+    "start:route-planner-orchestrator-service": "nest start route-planner-orchestrator-service --watch",
+    "start:all": "concurrently \"npm run start\" \"npm run start:card-orchestrator-service\" \"npm run start:card-service\" \"npm run start:fare-comparison-service\" \"npm run start:fare-service\" \"npm run start:maps-wrapper-service\" \"npm run start:notification-service\" \"npm run start:payment-wrapper-service\" \"npm run start:transaction-service\" \"npm run start:ride-hailing-aggregator-service\" \"npm run start:ride-hailing-wrapper-service\" \"npm run start:route-cache-service\" \"npm run start:user-service\" \"npm run start:arrival-timing-service\" \"npm run start:route-planner-orchestrator-service\"",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -33,7 +37,9 @@
   "dependencies": {
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/mongoose": "^11.0.4",
     "@nestjs/platform-express": "^11.0.1",
+    "mongoose": "^9.3.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },

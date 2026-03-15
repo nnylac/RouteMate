@@ -19,6 +19,15 @@
         "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
       }
     },
+    "arrival-timing-service": {
+      "type": "application",
+      "root": "apps/arrival-timing-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/arrival-timing-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/arrival-timing-service/tsconfig.app.json"
+      }
+    },
     "card-orchestrator-service": {
       "type": "application",
       "root": "apps/card-orchestrator-service",
@@ -82,6 +91,42 @@
         "tsConfigPath": "apps/payment-wrapper-service/tsconfig.app.json"
       }
     },
+    "ride-hailing-aggregator-service": {
+      "type": "application",
+      "root": "apps/ride-hailing-aggregator-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/ride-hailing-aggregator-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/ride-hailing-aggregator-service/tsconfig.app.json"
+      }
+    },
+    "ride-hailing-wrapper-service": {
+      "type": "application",
+      "root": "apps/ride-hailing-wrapper-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/ride-hailing-wrapper-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/ride-hailing-wrapper-service/tsconfig.app.json"
+      }
+    },
+    "route-cache-service": {
+      "type": "application",
+      "root": "apps/route-cache-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/route-cache-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/route-cache-service/tsconfig.app.json"
+      }
+    },
+    "route-planner-orchestrator-service": {
+      "type": "application",
+      "root": "apps/route-planner-orchestrator-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/route-planner-orchestrator-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/route-planner-orchestrator-service/tsconfig.app.json"
+      }
+    },
     "transaction-service": {
       "type": "application",
       "root": "apps/transaction-service",
@@ -89,6 +134,15 @@
       "sourceRoot": "apps/transaction-service/src",
       "compilerOptions": {
         "tsConfigPath": "apps/transaction-service/tsconfig.app.json"
+      }
+    },
+    "user-service": {
+      "type": "application",
+      "root": "apps/user-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/user-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/user-service/tsconfig.app.json"
       }
     }
   }
