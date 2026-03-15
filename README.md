@@ -6,6 +6,7 @@
 [circleci-url]: https://circleci.com/gh/nestjs/nest
 
 <p>
+```bash
 routemate/
 ├─ package.json
 ├─ README.md
@@ -25,6 +26,7 @@ routemate/
 │  └─ transaction-service/
 │  └─ user-service/
 ├─ frontend/
+```
 </p>
 
 

@@ -1,9 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
-// chosen route: saved_route
-// route_id, user_id, origin, destination, route_payload.json, is_locked, created_at, updated_at
-
 export type RouteCacheDocument = HydratedDocument<RouteCache>;
 
 @Schema({ _id: false })
