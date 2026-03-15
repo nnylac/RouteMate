@@ -32,8 +32,12 @@ export class RouteCacheService {
     return await newRoute.save();
   }
 
-  async deleteRouteCache(userId: number, origin: string, destination: string) {
-    return await this.routeCacheModel.deleteOne({
+  async deleteRouteCache(
+    userId: number,
+    origin: string,
+    destination: string,
+  ): Promise<{ acknowledged: boolean; deletedCount: number }> {
+    return this.routeCacheModel.deleteOne({
       user_id: userId,
       origin_label: origin,
       destination_label: destination,
