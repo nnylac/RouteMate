@@ -82,15 +82,6 @@
         "tsConfigPath": "apps/payment-wrapper-service/tsconfig.app.json"
       }
     },
-    "route-service": {
-      "type": "application",
-      "root": "apps/route-service",
-      "entryFile": "main",
-      "sourceRoot": "apps/route-service/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/route-service/tsconfig.app.json"
-      }
-    },
     "transaction-service": {
       "type": "application",
       "root": "apps/transaction-service",

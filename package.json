@@ -20,9 +20,8 @@
     "start:maps-wrapper-service": "nest start maps-wrapper-service --watch",
     "start:notification-service": "nest start notification-service --watch",
     "start:payment-wrapper-service": "nest start payment-wrapper-service --watch",
-    "start:route-service": "nest start route-service --watch",
     "start:transaction-service": "nest start transaction-service --watch",
-    "start:all": "concurrently \"npm run start\" \"npm run start:card-orchestrator-service\" \"npm run start:card-service\" \"npm run start:fare-comparison-service\" \"npm run start:fare-service\" \"npm run start:maps-wrapper-service\" \"npm run start:notification-service\" \"npm run start:payment-wrapper-service\" \"npm run start:route-service\" \"npm run start:transaction-service\"",
+    "start:all": "concurrently \"npm run start\" \"npm run start:card-orchestrator-service\" \"npm run start:card-service\" \"npm run start:fare-comparison-service\" \"npm run start:fare-service\" \"npm run start:maps-wrapper-service\" \"npm run start:notification-service\" \"npm run start:payment-wrapper-service\" \"npm run start:transaction-service\"",
     
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
