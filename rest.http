@@ -1,2 +1,2 @@
 
-get http://localhost:3004/fare-service
+post http://localhost:3004/fare-service/import/trunk-bus

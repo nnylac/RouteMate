@@ -5,9 +5,17 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  Unique,
 } from 'typeorm';
 
 @Entity({ name: 'pt_fare_rules' })
+@Unique([
+  'transportMode',
+  'fareCategory',
+  'applicableTime',
+  'distanceFromKm',
+  'distanceToKm',
+])
 @Index(['transportMode', 'fareCategory'])
 export class PtFareRule {
   @PrimaryGeneratedColumn({

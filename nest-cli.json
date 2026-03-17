@@ -61,7 +61,14 @@
       "entryFile": "main",
       "sourceRoot": "apps/fare-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/fare-service/tsconfig.app.json"
+        "tsConfigPath": "apps/fare-service/tsconfig.app.json",
+        "assets": [
+          {
+            "include": "../data/**/*",
+            "outDir": "dist/apps/fare-service/data"
+          }
+        ],
+        "watchAssets": true
       }
     },
     "maps-wrapper-service": {

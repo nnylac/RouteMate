@@ -20,4 +20,14 @@ export class FareServiceController {
   async getAllFareRules(): Promise<PtFareRule[]> {
     return this.fareService.getAllFareRules();
   }
+
+  @Post('import/trunk-bus')
+  async importTrunkBusCsv(): Promise<PtFareRule[]> {
+    return this.fareService.importTrunkBusCsv();
+  }
+
+  @Post('import/mrt-lrt')
+  async importMrtLrtCsv(): Promise<PtFareRule[]> {
+    return this.fareService.importMrtLrtCsv();
+  }
 }
