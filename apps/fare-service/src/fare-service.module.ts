@@ -9,6 +9,7 @@ import { PtFareRule } from './entities/pt-fare-rule.entity';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: 'apps/fare-service/.env',
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -18,7 +19,7 @@ import { PtFareRule } from './entities/pt-fare-rule.entity';
         port: Number(configService.getOrThrow<string>('POSTGRES_PORT')),
         username: configService.getOrThrow<string>('POSTGRES_USER'),
         password: configService.getOrThrow<string>('POSTGRES_PASSWORD'),
-        database: configService.getOrThrow<string>('POSTGRES_DB'),
+        database: 'fare_service_db',
         autoLoadEntities: true,
         synchronize: true,
       }),

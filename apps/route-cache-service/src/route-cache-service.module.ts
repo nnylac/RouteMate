@@ -4,12 +4,21 @@ import { RouteCacheService } from './route-cache-service.service';
 import { MongooseModule } from '@nestjs/mongoose';
 // eslint-disable-next-line prettier/prettier
 import { RouteCache, RouteCacheSchema } from '../schemas/route-cache-service-schemas';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
-    MongooseModule.forRoot(
-      'mongodb://root:root@localhost:27017/route_cache_db?authSource=admin',
-    ),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: 'apps/route-cache-service/.env',
+    }),
+
+    MongooseModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        uri: configService.get<string>('MONGO_URI'),
+      }),
+    }),
     MongooseModule.forFeature([
       { name: RouteCache.name, schema: RouteCacheSchema },
     ]),

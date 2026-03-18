@@ -1,2 +1,1 @@
-
-get http://localhost:3004/fare-service/rules
+GET http://localhost:3011/transactions/1
