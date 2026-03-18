@@ -1,10 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   RouteCache,
   RouteCacheDocument,
 } from '../schemas/route-cache-service-schemas';
+import { RouteSearchStatus } from './enums/route-cache.enums';
 
 @Injectable()
 export class RouteCacheService {
@@ -22,14 +27,25 @@ export class RouteCacheService {
   }
 
   async findRouteById(routeId: number) {
-    return await this.routeCacheModel.findOne({
-      route_id: routeId,
-    });
+    const route = await this.routeCacheModel.findOne({ route_id: routeId });
+
+    if (!route) {
+      throw new NotFoundException(`Route with route_id ${routeId} not found`);
+    }
+
+    return route;
   }
 
   async saveRouteCache(body: Partial<RouteCache>) {
-    const newRoute = new this.routeCacheModel(body);
-    return await newRoute.save();
+    return this.routeCacheModel.findOneAndUpdate(
+      { route_id: body.route_id },
+      body,
+      {
+        new: true,
+        upsert: true,
+        runValidators: true,
+      },
+    );
   }
 
   async deleteRouteCache(
@@ -45,14 +61,33 @@ export class RouteCacheService {
   }
 
   async selectRouteOption(routeId: number, optionId: number) {
-    return await this.routeCacheModel.findOneAndUpdate(
-      { route_id: routeId },
-      {
-        selected_option_id: optionId,
-        is_locked: true,
-        search_status: 'SELECTED',
-      },
-      { new: true },
+    const route = await this.routeCacheModel.findOne({ route_id: routeId });
+
+    if (!route) {
+      throw new NotFoundException(`Route with route_id ${routeId} not found`);
+    }
+
+    const optionExists = route.route_options.some(
+      (option) => option.option_id === optionId,
     );
+
+    if (!optionExists) {
+      throw new BadRequestException(
+        `Option ${optionId} does not exist for route ${routeId}`,
+      );
+    }
+
+    route.selected_option_id = optionId;
+    route.is_locked = true;
+    route.search_status = RouteSearchStatus.SELECTED;
+
+    return route.save();
+  }
+
+  async getRoutesByUser(userId: number) {
+    return this.routeCacheModel
+      .find({ user_id: userId })
+      .sort({ created_at: -1 })
+      .limit(10);
   }
 }

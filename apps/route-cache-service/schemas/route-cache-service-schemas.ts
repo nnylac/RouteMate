@@ -1,5 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import {
+  RouteSearchStatus,
+  RouteSegmentMode,
+  RouteMainMode,
+} from '../src/enums/route-cache.enums';
 
 export type RouteCacheDocument = HydratedDocument<RouteCache>;
 
@@ -8,8 +13,8 @@ export class RouteSegment {
   @Prop({ required: true })
   segment_id: number;
 
-  @Prop({ required: true })
-  mode: string; // WALK, BUS, MRT, etc.
+  @Prop({ type: String, required: true, enum: RouteSegmentMode })
+  mode: RouteSegmentMode; // WALK, BUS, MRT, etc.
 
   @Prop()
   from_stop?: string;
@@ -49,8 +54,8 @@ export class RouteOption {
   @Prop({ required: true, min: 0, default: 0 })
   transfer_count: number;
 
-  @Prop()
-  main_mode?: string;
+  @Prop({ type: String, enum: RouteMainMode })
+  main_mode?: RouteMainMode;
 
   @Prop({ required: true, default: true })
   is_public_transport: boolean;
@@ -90,8 +95,13 @@ export class RouteCache {
   @Prop({ required: true, default: false })
   is_locked: boolean;
 
-  @Prop({ required: true, default: 'GENERATED' })
-  search_status: string;
+  @Prop({
+    type: String,
+    required: true,
+    enum: RouteSearchStatus,
+    default: RouteSearchStatus.GENERATED,
+  })
+  search_status: RouteSearchStatus;
 
   @Prop({ type: [RouteOptionSchema], default: [] })
   route_options: RouteOption[];
