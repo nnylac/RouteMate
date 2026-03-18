@@ -50,13 +50,13 @@ npm install
 ## 2. Start Infrastructure Services
 This project uses Docker Compose to run shared infrastructure such as databases and message brokers.
 
-# Reset containers and volumes
+### Reset containers and volumes
 Use this if you want a clean restart:
 ```bash
 docker compose down -v
 ```
 
-# Start containers in detached mode
+### Start containers in detached mode
 ```bash
 docker compose up -d
 ```
