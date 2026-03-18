@@ -85,7 +85,7 @@ export class FareService {
           this.ptFareRuleRepository.create({
             transportMode: 'trunk_bus',
             fareCategory: mapping.fareCategory,
-            applicableTime: null,
+            applicableTime: 'all_day',
             distanceFromKm: fromKm,
             distanceToKm: toKm,
             fareAmount: this.centsToDollars(mapping.fareAmount),
@@ -115,7 +115,9 @@ export class FareService {
       return this.ptFareRuleRepository.create({
         transportMode: 'mrt_lrt',
         fareCategory: this.normalizeFareCategory(row.fare_type),
-        applicableTime: row.applicable_time?.trim() || null,
+        applicableTime: row.applicable_time
+          ? this.normalizeText(row.applicable_time)
+          : null,
         distanceFromKm: fromKm,
         distanceToKm: toKm,
         fareAmount: this.centsToDollars(row.fare_per_ride),
@@ -139,6 +141,10 @@ export class FareService {
         .on('end', () => resolve(results))
         .on('error', (error: Error) => reject(error));
     });
+  }
+
+  private normalizeText(value: string): string {
+    return value.trim().replace(/\s+/g, ' ');
   }
 
   private parseDistanceRange(distanceText: string): {
@@ -209,7 +215,7 @@ export class FareService {
     const fareRule = this.ptFareRuleRepository.create({
       transportMode: 'trunk_bus',
       fareCategory: 'adult_card',
-      applicableTime: null,
+      applicableTime: 'all_day',
       distanceFromKm: '0.00',
       distanceToKm: '3.20',
       fareAmount: '1.28',

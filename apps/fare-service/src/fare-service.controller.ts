@@ -11,10 +11,10 @@ export class FareServiceController {
     return 'fare service is running';
   }
 
-  @Post('test')
-  async createTestFareRule(): Promise<PtFareRule> {
-    return this.fareService.createTestFareRule();
-  }
+  // @Post('test')
+  // async createTestFareRule(): Promise<PtFareRule> {
+  //   return this.fareService.createTestFareRule();
+  // }
 
   @Get('rules')
   async getAllFareRules(): Promise<PtFareRule[]> {
