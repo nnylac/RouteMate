@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { AxiosResponse } from 'axios';
 
 // Define the shape of the data we expect from the Wrapper
 export interface RideQuote {
@@ -39,13 +40,11 @@ export class RideHailingAggregatorServiceService {
       ),
     ]);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const quotes: RideQuote[] = responses
       .filter(
-        (res): res is PromiseFulfilledResult<{ data: RideQuote }> =>
+        (res): res is PromiseFulfilledResult<AxiosResponse<RideQuote>> =>
           res.status === 'fulfilled',
       )
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       .map((res) => res.value.data);
 
     // 3. If no quotes were found, return empty early
