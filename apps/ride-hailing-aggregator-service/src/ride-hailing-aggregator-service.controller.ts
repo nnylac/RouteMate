@@ -1,12 +1,27 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Post, Body, Query } from '@nestjs/common';
 import { RideHailingAggregatorServiceService } from './ride-hailing-aggregator-service.service';
 
-@Controller()
+@Controller('ridehail')
 export class RideHailingAggregatorServiceController {
-  constructor(private readonly rideHailingAggregatorServiceService: RideHailingAggregatorServiceService) {}
+  constructor(
+    private readonly rideHailingAggregatorServiceService: RideHailingAggregatorServiceService,
+  ) {}
 
-  @Get()
-  getHello(): string {
-    return this.rideHailingAggregatorServiceService.getHello();
+  @Post('quotes')
+  // async getQuotes(@Body() body: { origin: string; destination: string }) {
+  //   return this.rideHailingAggregatorServiceService.getQuotes(
+  //     body.origin,
+  //     body.destination,
+  //   );
+  // }
+  async getQuotes(
+    @Body() body: { origin: string; destination: string },
+    @Query('sortBy') sortBy: 'price' | 'eta' = 'price', // Default to cheapest
+  ) {
+    return this.rideHailingAggregatorServiceService.getQuotes(
+      body.origin,
+      body.destination,
+      sortBy,
+    );
   }
 }
