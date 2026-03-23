@@ -6,7 +6,7 @@ import { RideHailingWrapperServiceService } from './ride-hailing-wrapper-service
 @Module({
   imports: [
     ConfigModule.forRoot({
-      ignoreEnvFile: true, 
+      ignoreEnvFile: true,
     }),
   ],
   controllers: [RideHailingWrapperServiceController],
