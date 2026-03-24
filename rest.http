@@ -1,1 +1,16 @@
 POST http://localhost:3012/user-service/register
+
+###
+GET http://localhost:3005/maps/routes?origin=Tampines MRT&destination=Orchard MRT
+
+###
+
+GET http://localhost:3013/arrival-timing?line=EW&stop=Tampines
+
+###
+
+GET http://localhost:3013/arrival-timing?line=NS&stop=Orchard
+
+###
+
+GET http://localhost:3013/arrival-timing?line=EW&stop=UnknownStop
