@@ -1,1 +1,12 @@
 POST http://localhost:3012/user-service/register
+GET http://localhost:3002/card-service/cards
+
+###
+
+GET http://localhost:3002/card-service/cards/user/user_001
+
+###
+GET http://localhost:3002/card-service/cards/69c57f5ffc52b87b0d0d2ae8
+
+###
+GET http://localhost:3002/card-service/cards/number/CARD39222077
