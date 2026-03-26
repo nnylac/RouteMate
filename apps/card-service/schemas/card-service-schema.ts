@@ -14,13 +14,18 @@ export class Card {
   @Prop({ required: true, unique: true, trim: true })
   cardNumber: string;
 
-  @Prop({ required: true, trim: true })
+  @Prop({ required: true, enum: ['adult', 'student', 'senior'], trim: true })
   cardType: string;
 
-  @Prop({ required: true, default: 0 })
+  @Prop({ required: true, default: 0, min: 0 })
   balance: number;
 
-  @Prop({ required: true, default: 'active', trim: true })
+  @Prop({
+    required: true,
+    default: 'active',
+    enum: ['active', 'blocked', 'inactive'],
+    trim: true,
+  })
   status: string;
 }
 

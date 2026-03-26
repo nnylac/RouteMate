@@ -1,0 +1,18 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: ride-hailing-aggregator
+    url: http://host.docker.internal:3008
+    routes:
+      - name: aggregator-route
+        paths:
+          - /ridehail
+        strip_path: false
+
+  - name: ride-hailing-wrapper
+    url: http://host.docker.internal:3009
+    routes:
+      - name: wrapper-route
+        paths:
+          - /wrapper

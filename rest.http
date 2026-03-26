@@ -1,39 +1,12 @@
 POST http://localhost:3012/user-service/register
-
-###
-GET http://localhost:3005/maps/routes?origin=Tampines MRT&destination=Orchard MRT
-
-###
-
-GET http://localhost:3013/arrival-timing?line=NS&stop=Orchard
+GET http://localhost:3002/card-service/cards
 
 ###
 
-GET http://localhost:3013/arrival-timing?line=EW&stop=UnknownStop
+GET http://localhost:3002/card-service/cards/user/user_001
 
 ###
-
-POST http://localhost:3014/route-planner/search
-Content-Type: application/json
-
-{
-  "user_id": 1001,
-  "origin": "Tampines MRT",
-  "destination": "Orchard MRT"
-}
+GET http://localhost:3002/card-service/cards/69c57f5ffc52b87b0d0d2ae8
 
 ###
-
-# Get saved routes for a user
-GET http://localhost:3014/route-planner/routes?user_id=1001&origin=Tampines MRT&destination=Orchard MRT
-
-###
-
-# Select/lock a route option (use the route_id from the response above)
-PATCH http://localhost:3014/route-planner/select
-Content-Type: application/json
-
-{
-  "route_id": 1774425608061,
-  "option_id": 1
-}
+GET http://localhost:3002/card-service/cards/number/CARD39222077
