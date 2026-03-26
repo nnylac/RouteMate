@@ -1,8 +1,18 @@
 import { NestFactory } from '@nestjs/core';
 import { UserServiceModule } from './user-service.module';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(UserServiceModule);
-  await app.listen(process.env.port ?? 3012);
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
+  await app.listen(process.env.PORT ?? 3012);
 }
 bootstrap();

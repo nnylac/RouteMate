@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserServiceController } from './user-service.controller';
-import { UserServiceService } from './user-service.service';
+import { UserService } from './user-service.service';
 
 describe('UserServiceController', () => {
   let userServiceController: UserServiceController;
@@ -8,15 +8,17 @@ describe('UserServiceController', () => {
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [UserServiceController],
-      providers: [UserServiceService],
+      providers: [UserService],
     }).compile();
 
-    userServiceController = app.get<UserServiceController>(UserServiceController);
+    userServiceController = app.get<UserServiceController>(
+      UserServiceController,
+    );
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(userServiceController.getHello()).toBe('Hello World!');
+    it('should return "user service is running"', () => {
+      expect(userServiceController.getHello()).toBe('user service is running');
     });
   });
 });
