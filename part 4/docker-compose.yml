@@ -1,0 +1,71 @@
+services:
+
+  # ──────────────────────────────────────────────
+  # Infrastructure
+  # ──────────────────────────────────────────────
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB:       transaction_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI  →  http://localhost:15672
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────
+  # Microservices
+  # ──────────────────────────────────────────────
+
+  payment-wrapper-service:
+    build: ./payment-wrapper-service
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}   # set in .env at project root
+      PORT: 5001
+      FLASK_DEBUG: "false"
+
+  transaction-service:
+    build: ./transaction-service
+    restart: unless-stopped
+    ports:
+      - "5003:5003"
+    environment:
+      DATABASE_URL:       postgresql://postgres:postgres@postgres:5432/transaction_db
+      RABBITMQ_URL:       amqp://guest:guest@rabbitmq:5672/
+      RABBITMQ_EXCHANGE:  routemate.events
+      PORT: 5003
+      FLASK_DEBUG: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
