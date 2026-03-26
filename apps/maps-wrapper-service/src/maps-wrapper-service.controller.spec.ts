@@ -11,12 +11,12 @@ describe('MapsWrapperServiceController', () => {
       providers: [MapsWrapperServiceService],
     }).compile();
 
-    mapsWrapperServiceController = app.get<MapsWrapperServiceController>(MapsWrapperServiceController);
+    mapsWrapperServiceController = app.get<MapsWrapperServiceController>(
+      MapsWrapperServiceController,
+    );
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(mapsWrapperServiceController.getHello()).toBe('Hello World!');
-    });
+  it('should be defined', () => {
+    expect(mapsWrapperServiceController).toBeDefined();
   });
 });

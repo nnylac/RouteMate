@@ -3,7 +3,9 @@ import { MapsWrapperServiceService } from './maps-wrapper-service.service';
 
 @Controller('maps')
 export class MapsWrapperServiceController {
-  constructor(private readonly mapsWrapperServiceService: MapsWrapperServiceService) {}
+  constructor(
+    private readonly mapsWrapperServiceService: MapsWrapperServiceService,
+  ) {}
 
   @Get('routes')
   async getRoutes(

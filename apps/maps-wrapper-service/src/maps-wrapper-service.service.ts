@@ -1,13 +1,41 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  Client,
-  TravelMode,
-} from '@googlemaps/google-maps-services-js';
+import { Client, TravelMode } from '@googlemaps/google-maps-services-js';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+
+type RouteStep = {
+  travel_mode: string;
+  duration: {
+    value: number;
+  };
+  distance: {
+    value: number;
+  };
+  transit_details?: {
+    departure_stop?: {
+      name?: string;
+    };
+    arrival_stop?: {
+      name?: string;
+    };
+    line?: {
+      short_name?: string;
+      name?: string;
+      vehicle?: {
+        type?: string;
+      };
+    };
+  };
+};
+
+type GoogleMapsErrorResponse = {
+  response?: {
+    data?: unknown;
+  };
+};
 
 @Injectable()
 export class MapsWrapperServiceService {
@@ -19,6 +47,10 @@ export class MapsWrapperServiceService {
 
   async getRoutes(origin: string, destination: string) {
     const apiKey = process.env.GOOGLE_MAPS_API_KEY!;
+
+    if (!apiKey) {
+      throw new InternalServerErrorException('Missing GOOGLE_MAPS_API_KEY');
+    }
 
     try {
       const response = await this.client.directions({
@@ -35,16 +67,15 @@ export class MapsWrapperServiceService {
 
       const options = routes.map((route, optionIndex) => {
         const leg = route.legs[0];
-        const steps = leg.steps as any[];
+        const steps = (leg.steps ?? []) as RouteStep[];
 
-        const transitSteps = steps.filter(
-          (s) => s.travel_mode === 'TRANSIT',
-        );
+        const transitSteps = steps.filter((s) => s.travel_mode === 'TRANSIT');
         const transferCount = Math.max(0, transitSteps.length - 1);
 
         const mainMode =
           transitSteps.length > 0
-            ? (transitSteps[0].transit_details?.line?.vehicle?.type ?? 'TRANSIT')
+            ? (transitSteps[0].transit_details?.line?.vehicle?.type ??
+              'TRANSIT')
             : 'WALKING';
 
         const isPublicTransport = transitSteps.length > 0;
@@ -63,8 +94,8 @@ export class MapsWrapperServiceService {
             distance_km: parseFloat((step.distance.value / 1000).toFixed(2)),
             line_or_service: isTransit
               ? (step.transit_details?.line?.short_name ??
-                 step.transit_details?.line?.name ??
-                 null)
+                step.transit_details?.line?.name ??
+                null)
               : null,
             segment_order: segIndex + 1,
           };
@@ -87,9 +118,15 @@ export class MapsWrapperServiceService {
         destination_label: destination,
         options,
       };
-    } catch (error) {
-      console.error('Google Maps API error:', JSON.stringify(error?.response?.data ?? error, null, 2));
-      throw new InternalServerErrorException('Failed to fetch routes from Google Maps');
+    } catch (error: unknown) {
+      const errorWithResponse = error as GoogleMapsErrorResponse;
+      console.error(
+        'Google Maps API error:',
+        JSON.stringify(errorWithResponse?.response?.data ?? error, null, 2),
+      );
+      throw new InternalServerErrorException(
+        'Failed to fetch routes from Google Maps',
+      );
     }
   }
 }
