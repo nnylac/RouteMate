@@ -1,0 +1,23 @@
+{
+  "quotes": [
+    {
+      "id": "1",
+      "origin": "SMU",
+      "destination": "Changi Airport",
+      "results": [
+        { "provider": "Grab", "price": 28.50, "eta": 12, "link": "https://grab.fake/ride1" },
+        { "provider": "Gojek", "price": 26.00, "eta": 15, "link": "https://gojek.fake/ride2" },
+        { "provider": "Tada", "price": 24.50, "eta": 18, "link": "https://tada.fake/ride3" }
+      ]
+    },
+    {
+      "id": "2",
+      "origin": "Woodlands",
+      "destination": "SMU",
+      "results": [
+        { "provider": "Grab", "price": 32.00, "eta": 8, "link": "https://grab.fake/ride4" },
+        { "provider": "Gojek", "price": 30.50, "eta": 10, "link": "https://gojek.fake/ride5" }
+      ]
+    }
+  ]
+}

@@ -8,12 +8,6 @@ export class RideHailingAggregatorServiceController {
   ) {}
 
   @Post('quotes')
-  // async getQuotes(@Body() body: { origin: string; destination: string }) {
-  //   return this.rideHailingAggregatorServiceService.getQuotes(
-  //     body.origin,
-  //     body.destination,
-  //   );
-  // }
   async getQuotes(
     @Body() body: { origin: string; destination: string },
     @Query('sortBy') sortBy: 'price' | 'eta' = 'price', // Default to cheapest

@@ -6,26 +6,26 @@ export class RideHailingWrapperServiceController {
   constructor(private readonly service: RideHailingWrapperServiceService) {}
 
   @Get('grab/quotes')
-  getGrab(
+  async getGrab(
     @Query('origin') origin: string,
     @Query('destination') destination: string,
   ) {
-    return this.service.getGrabQuote(origin, destination);
+    return await this.service.getGrabQuote(origin, destination);
   }
 
   @Get('gojek/quotes')
-  getGojek(
+  async getGojek(
     @Query('origin') origin: string,
     @Query('destination') destination: string,
   ) {
-    return this.service.getGojekQuote(origin, destination);
+    return await this.service.getGojekQuote(origin, destination);
   }
 
   @Get('tada/quotes')
-  getTada(
+  async getTada(
     @Query('origin') origin: string,
     @Query('destination') destination: string,
   ) {
-    return this.service.getTadaQuote(origin, destination);
+    return await this.service.getTadaQuote(origin, destination);
   }
 }
