@@ -1,10 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PtFareRule } from './entities/pt-fare-rule.entity';
 import * as fs from 'fs';
 import * as path from 'path';
 import csv from 'csv-parser';
+import { CalculateFareDto } from './dto/calculate-fare.dto';
 
 type CsvRow = Record<string, string>;
 
@@ -16,115 +22,139 @@ export class FareService {
   ) {}
 
   async importTrunkBusCsv(): Promise<PtFareRule[]> {
-    const filePath = path.join(
-      process.cwd(),
-      'apps',
-      'fare-service',
-      'data',
-      'trunk-bus.csv',
-    );
+    try {
+      const filePath = path.join(
+        process.cwd(),
+        'apps',
+        'fare-service',
+        'data',
+        'trunk-bus.csv',
+      );
 
-    console.log('cwd:', process.cwd());
-    console.log('resolved file path:', filePath);
-    console.log('exists:', fs.existsSync(filePath));
+      const rawRows = await this.readCsv(filePath);
 
-    const rawRows = await this.readCsv(filePath);
-
-    await this.ptFareRuleRepository.delete({ transportMode: 'trunk_bus' });
-
-    const fareRules: PtFareRule[] = [];
-
-    for (const row of rawRows) {
-      const { fromKm, toKm } = this.parseDistanceRange(row.distance);
-
-      const mappings = [
-        {
-          fareCategory: 'adult_card',
-          fareAmount: row.adult_card_fare_per_ride,
-        },
-        {
-          fareCategory: 'adult_cash',
-          fareAmount: row.adult_cash_fare_per_ride,
-        },
-        {
-          fareCategory: 'senior_card',
-          fareAmount: row.senior_citizen_card_fare_per_ride,
-        },
-        {
-          fareCategory: 'senior_cash',
-          fareAmount: row.senior_citizen_cash_fare_per_ride,
-        },
-        {
-          fareCategory: 'student_card',
-          fareAmount: row.student_card_fare_per_ride,
-        },
-        {
-          fareCategory: 'student_cash',
-          fareAmount: row.student_cash_fare_per_ride,
-        },
-        {
-          fareCategory: 'workfare_card',
-          fareAmount: row.workfare_transport_concession_card_fare_per_ride,
-        },
-        {
-          fareCategory: 'workfare_cash',
-          fareAmount: row.workfare_transport_concession_cash_fare_per_ride,
-        },
-        {
-          fareCategory: 'pwd_card',
-          fareAmount: row.persons_with_disabilities_card_fare_per_ride,
-        },
-        {
-          fareCategory: 'pwd_cash',
-          fareAmount: row.persons_with_disabilities_cash_fare_per_ride,
-        },
-      ];
-
-      for (const mapping of mappings) {
-        fareRules.push(
-          this.ptFareRuleRepository.create({
-            transportMode: 'trunk_bus',
-            fareCategory: mapping.fareCategory,
-            applicableTime: 'all_day',
-            distanceFromKm: fromKm,
-            distanceToKm: toKm,
-            fareAmount: this.centsToDollars(mapping.fareAmount),
-          }),
-        );
+      if (!rawRows.length) {
+        throw new BadRequestException('trunk-bus.csv is empty');
       }
-    }
 
-    return this.ptFareRuleRepository.save(fareRules);
+      await this.ptFareRuleRepository.delete({ transportMode: 'trunk_bus' });
+
+      const fareRules: PtFareRule[] = [];
+
+      for (const row of rawRows) {
+        const { fromKm, toKm } = this.parseDistanceRange(row.distance);
+
+        const mappings = [
+          {
+            fareCategory: 'adult_card',
+            fareAmount: row.adult_card_fare_per_ride,
+          },
+          {
+            fareCategory: 'adult_cash',
+            fareAmount: row.adult_cash_fare_per_ride,
+          },
+          {
+            fareCategory: 'senior_card',
+            fareAmount: row.senior_citizen_card_fare_per_ride,
+          },
+          {
+            fareCategory: 'senior_cash',
+            fareAmount: row.senior_citizen_cash_fare_per_ride,
+          },
+          {
+            fareCategory: 'student_card',
+            fareAmount: row.student_card_fare_per_ride,
+          },
+          {
+            fareCategory: 'student_cash',
+            fareAmount: row.student_cash_fare_per_ride,
+          },
+          {
+            fareCategory: 'workfare_card',
+            fareAmount: row.workfare_transport_concession_card_fare_per_ride,
+          },
+          {
+            fareCategory: 'workfare_cash',
+            fareAmount: row.workfare_transport_concession_cash_fare_per_ride,
+          },
+          {
+            fareCategory: 'pwd_card',
+            fareAmount: row.persons_with_disabilities_card_fare_per_ride,
+          },
+          {
+            fareCategory: 'pwd_cash',
+            fareAmount: row.persons_with_disabilities_cash_fare_per_ride,
+          },
+        ];
+
+        for (const mapping of mappings) {
+          fareRules.push(
+            this.ptFareRuleRepository.create({
+              transportMode: 'trunk_bus',
+              fareCategory: mapping.fareCategory,
+              applicableTime: 'all_day',
+              distanceFromKm: fromKm,
+              distanceToKm: toKm,
+              fareAmount: this.centsToDollars(mapping.fareAmount),
+            }),
+          );
+        }
+      }
+
+      return await this.ptFareRuleRepository.save(fareRules);
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
+        `Failed to import trunk bus CSV: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      );
+    }
   }
 
   async importMrtLrtCsv(): Promise<PtFareRule[]> {
-    const filePath = path.join(
-      process.cwd(),
-      'apps',
-      'fare-service',
-      'data',
-      'mrt-lrt.csv',
-    );
-    const rawRows = await this.readCsv(filePath);
+    try {
+      const filePath = path.join(
+        process.cwd(),
+        'apps',
+        'fare-service',
+        'data',
+        'mrt-lrt.csv',
+      );
+      const rawRows = await this.readCsv(filePath);
 
-    await this.ptFareRuleRepository.delete({ transportMode: 'mrt_lrt' });
+      if (!rawRows.length) {
+        throw new BadRequestException('mrt-lrt.csv is empty');
+      }
 
-    const fareRules = rawRows.map((row) => {
-      const { fromKm, toKm } = this.parseDistanceRange(row.distance);
+      await this.ptFareRuleRepository.delete({ transportMode: 'mrt_lrt' });
 
-      return this.ptFareRuleRepository.create({
-        transportMode: 'mrt_lrt',
-        fareCategory: this.normalizeFareCategory(row.fare_type),
-        applicableTime: row.applicable_time
-          ? this.normalizeText(row.applicable_time)
-          : null,
-        distanceFromKm: fromKm,
-        distanceToKm: toKm,
-        fareAmount: this.centsToDollars(row.fare_per_ride),
+      const fareRules = rawRows.map((row) => {
+        const { fromKm, toKm } = this.parseDistanceRange(row.distance);
+
+        return this.ptFareRuleRepository.create({
+          transportMode: 'mrt_lrt',
+          fareCategory: this.normalizeFareCategory(row.fare_type),
+          applicableTime: row.applicable_time
+            ? this.normalizeText(row.applicable_time)
+            : null,
+          distanceFromKm: fromKm,
+          distanceToKm: toKm,
+          fareAmount: this.centsToDollars(row.fare_per_ride),
+        });
       });
-    });
 
-    return this.ptFareRuleRepository.save(fareRules);
+      return await this.ptFareRuleRepository.save(fareRules);
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+
+      throw new InternalServerErrorException(
+        `Failed to import MRT/LRT CSV: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
   }
 
   private readCsv(filePath: string): Promise<CsvRow[]> {
@@ -185,7 +215,7 @@ export class FareService {
       };
     }
 
-    throw new Error(`Invalid distance range: ${distanceText}`);
+    throw new BadRequestException(`Invalid distance range: ${distanceText}`);
   }
 
   private centsToDollars(value: string): string {
@@ -226,5 +256,37 @@ export class FareService {
 
   async getAllFareRules(): Promise<PtFareRule[]> {
     return this.ptFareRuleRepository.find();
+  }
+
+  async calculateFare(dto: CalculateFareDto): Promise<PtFareRule | null> {
+    const distance = dto.distanceKm.toFixed(2);
+
+    const query = this.ptFareRuleRepository
+      .createQueryBuilder('rule')
+      .where('rule.transportMode = :transportMode', {
+        transportMode: dto.transportMode,
+      })
+      .andWhere('rule.fareCategory = :fareCategory', {
+        fareCategory: dto.fareCategory,
+      })
+      .andWhere(':distance >= rule.distanceFromKm', { distance })
+      .andWhere(':distance <= rule.distanceToKm', { distance });
+
+    if (dto.applicableTime) {
+      query.andWhere(
+        '(rule.applicableTime = :applicableTime OR rule.applicableTime IS NULL)',
+        { applicableTime: dto.applicableTime },
+      );
+    }
+
+    const fareRule = await query.getOne();
+
+    if (!fareRule) {
+      throw new NotFoundException(
+        `No fare rule found for transportMode=${dto.transportMode}, fareCategory=${dto.fareCategory}, distanceKm=${dto.distanceKm}`,
+      );
+    }
+
+    return fareRule;
   }
 }

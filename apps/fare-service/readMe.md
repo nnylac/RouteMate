@@ -18,3 +18,27 @@ run ```GET http://localhost:3004/fare-service/rules```
 
 
 notes: when posting steps 2 and 3 repeatedly, postgres ID will increase, ultimately should not affect calling of data
+
+
+
+4. calculate/retrieve fare
+```POST http://localhost:3004/fare-service/calculate```
+
+using postman, input in body:
+```bash
+# for trunk bus
+{
+  "transportMode": "trunk_bus",
+  "fareCategory": "adult_card",
+  "distanceKm": 3.2,
+  "applicableTime": "all_day"
+}
+
+# for mrt-lrt
+{
+  "transportMode": "mrt_lrt",
+  "fareCategory": "adult_card",
+  "distanceKm": 4.1
+}
+```
+
