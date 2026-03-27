@@ -11,7 +11,9 @@ describe('ArrivalTimingServiceController', () => {
       providers: [ArrivalTimingServiceService],
     }).compile();
 
-    arrivalTimingServiceController = app.get<ArrivalTimingServiceController>(ArrivalTimingServiceController);
+    arrivalTimingServiceController = app.get<ArrivalTimingServiceController>(
+      ArrivalTimingServiceController,
+    );
   });
 
   describe('root', () => {
