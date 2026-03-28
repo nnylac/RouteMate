@@ -1,4 +1,4 @@
-# MongoDB. Postgres
+# MongoDB, Postgres, RabbitMQ
 services:
   mongo:
     image: mongo
@@ -12,18 +12,30 @@ services:
     volumes:
       - mongodata:/data/db
       - ./databases/mongo/init:/docker-entrypoint-initdb.d
+
   postgres:
-      image: postgres:latest
-      container_name: my-postgres
-      restart: always
-      environment:
-        POSTGRES_USER: ${POSTGRES_USER}
-        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      ports:
-        - "${POSTGRES_PORT}:5432"
-      volumes:
-        - pgdata:/var/lib/postgresql
-        - ./databases/postgres/init:/docker-entrypoint-initdb.d
+    image: postgres:latest
+    container_name: my-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ./databases/postgres/init:/docker-entrypoint-initdb.d
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: my-rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "15672:15672"   # Management UI → http://localhost:15672
 
 volumes:
   mongodata:

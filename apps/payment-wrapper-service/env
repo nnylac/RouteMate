@@ -1,0 +1,3 @@
+# Get your test key from https://dashboard.stripe.com/test/apikeys
+# Always starts with sk_test_
+STRIPE_SECRET_KEY=sk_test_REPLACE_ME

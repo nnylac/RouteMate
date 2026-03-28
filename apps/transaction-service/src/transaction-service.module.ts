@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { TransactionServiceController } from './transaction-service.controller';
 import { TransactionService } from './transaction-service.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Transaction } from './entities/transaction.entity';
+import { RabbitMQPublisher } from './publisher/rabbitmq.publisher';
 
 @Module({
   imports: [
@@ -19,8 +20,8 @@ import { Transaction } from './entities/transaction.entity';
         port: Number(configService.getOrThrow<string>('POSTGRES_PORT')),
         username: configService.getOrThrow<string>('POSTGRES_USER'),
         password: configService.getOrThrow<string>('POSTGRES_PASSWORD'),
-        // eslint-disable-next-line prettier/prettier
-        database: configService.get<string>('POSTGRES_DB') ?? 'transaction_service_db',
+        database:
+          configService.get<string>('POSTGRES_DB') ?? 'transaction_service_db',
         autoLoadEntities: true,
         synchronize: true,
       }),
@@ -28,6 +29,6 @@ import { Transaction } from './entities/transaction.entity';
     TypeOrmModule.forFeature([Transaction]),
   ],
   controllers: [TransactionServiceController],
-  providers: [TransactionService],
+  providers: [TransactionService, RabbitMQPublisher],
 })
 export class TransactionServiceModule {}
