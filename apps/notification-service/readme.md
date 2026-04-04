@@ -1,11 +1,11 @@
-running on port 3006
+running on port 3002
 
 1. test notification service
-```GET http://localhost:3006/notification-service```
+```GET http://localhost:3002/notification-service```
 returns: notification service is running
 
 2. test insert data
-```POST http://localhost:3006/notification-service/test```
+```POST http://localhost:3002/notification-service/test```
 
 ```bash
 {
@@ -48,3 +48,11 @@ returns: notification service is running
     "__v": 0
   }
 ]```
+4. RabbitMQ consumer
+When notification-service starts, it also starts a RabbitMQ consumer.
+
+It listens for:
+```bash
+card.topup.success
+card.topup.failed
+card.topup.rollback
