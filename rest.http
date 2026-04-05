@@ -10,3 +10,38 @@ GET http://localhost:3002/card-service/cards/69c57f5ffc52b87b0d0d2ae8
 
 ###
 GET http://localhost:3002/card-service/cards/number/CARD39222077
+
+###
+
+POST http://localhost:3014/route-planner/search
+Content-Type: application/json
+
+{
+  "user_id": 1001,
+  "origin": "Tampines MRT",
+  "destination": "Orchard MRT"
+}
+
+###
+
+PATCH http://localhost:3014/route-planner/select
+Content-Type: application/json
+
+{
+  "route_id": 1775369386057,
+  "option_id": 1
+}
+
+###
+
+POST http://localhost:3014/route-planner/disrupt
+Content-Type: application/json
+
+{
+  "route_id": 1775369386057,
+  "disrupted_line": "EW"
+}
+
+###
+
+GET http://localhost:3006/notification-service/notifications

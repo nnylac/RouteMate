@@ -90,4 +90,18 @@ export class RouteCacheService {
       .sort({ created_at: -1 })
       .limit(10);
   }
+
+  async disruptRoute(routeId: number) {
+    const route = await this.routeCacheModel.findOne({ route_id: routeId });
+
+    if (!route) {
+      throw new NotFoundException(`Route with route_id ${routeId} not found`);
+    }
+
+    route.is_locked = false;
+    route.selected_option_id = undefined;
+    route.search_status = RouteSearchStatus.DISRUPTED;
+
+    return route.save();
+  }
 }
