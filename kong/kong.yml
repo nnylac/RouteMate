@@ -1,18 +1,300 @@
 _format_version: "3.0"
 _transform: true
 
+# =============================================================================
+# ROUTEMATE - KONG DECLARATIVE CONFIG
+# =============================================================================
+# Public proxy:  http://localhost:8080
+# Admin API:     http://localhost:8081
+#
+# SERVICE STATUS:
+#   ✅ fully working   ⚠️ stub (routes not implemented yet)   ❌ needs DB creds
+#
+# host.docker.internal → resolves to your Windows host machine from inside Docker
+# =============================================================================
+
 services:
+
+  # ── Route Planner Orchestrator (port 3014) ✅ ────────────────────────────
+  - name: route-planner-orchestrator
+    url: http://host.docker.internal:3014
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: route-planner-search
+        paths:
+          - /route-planner/search
+        methods: [POST]
+        strip_path: false
+      - name: route-planner-select
+        paths:
+          - /route-planner/select
+        methods: [PATCH]
+        strip_path: false
+      - name: route-planner-routes
+        paths:
+          - /route-planner/routes
+        methods: [GET]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+          fault_tolerant: true
+
+  # ── Ride-Hailing Aggregator (port 3008) ✅ ──────────────────────────────
   - name: ride-hailing-aggregator
     url: http://host.docker.internal:3008
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
     routes:
-      - name: aggregator-route
+      - name: ride-hailing-quotes
         paths:
-          - /ridehail
+          - /ridehail/quotes
+        methods: [POST]
         strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+          fault_tolerant: true
 
+  # ── Ride-Hailing Wrapper (port 3009) ✅ internal ─────────────────────────
+  # Exposed under /internal/ prefix so it's clear this is not a public route
   - name: ride-hailing-wrapper
     url: http://host.docker.internal:3009
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
     routes:
-      - name: wrapper-route
+      - name: ride-hailing-wrapper-grab
         paths:
-          - /wrapper
+          - /internal/grab/quotes
+        methods: [GET]
+        strip_path: true
+      - name: ride-hailing-wrapper-gojek
+        paths:
+          - /internal/gojek/quotes
+        methods: [GET]
+        strip_path: true
+      - name: ride-hailing-wrapper-tada
+        paths:
+          - /internal/tada/quotes
+        methods: [GET]
+        strip_path: true
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 30
+          policy: local
+          fault_tolerant: true
+
+  # ── Arrival Timing Service (port 3013) ✅ ───────────────────────────────
+  - name: arrival-timing-service
+    url: http://host.docker.internal:3013
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: arrival-timing
+        paths:
+          - /arrival-timing
+        methods: [GET]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+          fault_tolerant: true
+
+  # ── Maps Wrapper Service (port 3005) ✅ ─────────────────────────────────
+  - name: maps-wrapper-service
+    url: http://host.docker.internal:3005
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: maps-routes
+        paths:
+          - /maps/routes
+        methods: [GET]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+          fault_tolerant: true
+
+  # ── Card Orchestrator (port 3001) ⚠️ stub ───────────────────────────────
+  # Only has GET / — update paths when your teammate implements real routes
+  - name: card-orchestrator-service
+    url: http://host.docker.internal:3001
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: card-orchestrator-health
+        paths:
+          - /cards
+        methods: [GET, POST, PATCH, DELETE]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+          fault_tolerant: true
+
+  # ── Fare Comparison Service (port 3003) ⚠️ stub ─────────────────────────
+  # Only has GET / — update paths when implemented
+  - name: fare-comparison-service
+    url: http://host.docker.internal:3003
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: fare-comparison
+        paths:
+          - /fare/compare
+        methods: [GET, POST]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+          fault_tolerant: true
+
+  # ── Payment Wrapper Service (port 3007) ⚠️ stub ─────────────────────────
+  # Only has GET / — update paths when implemented
+  - name: payment-wrapper-service
+    url: http://host.docker.internal:3007
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: payment-wrapper
+        paths:
+          - /payment
+        methods: [GET, POST]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 30
+          policy: local
+          fault_tolerant: true
+
+  # ── Notification Service (port 3006) ❌ needs Mongo ──────────────────────
+  # Uncomment when MONGO_URI is available
+  # - name: notification-service
+  #   url: http://host.docker.internal:3006
+  #   routes:
+  #     - name: notifications
+  #       paths:
+  #         - /notifications
+  #       methods: [GET, POST]
+  #       strip_path: false
+
+  # ── User Service (port 3012) ❌ needs Mongo ──────────────────────────────
+  # Uncomment when MONGO_URI is available
+  # - name: user-service
+  #   url: http://host.docker.internal:3012
+  #   routes:
+  #     - name: users
+  #       paths:
+  #         - /users
+  #       methods: [GET, POST, PATCH, DELETE]
+  #       strip_path: false
+  #     - name: auth
+  #       paths:
+  #         - /auth
+  #       methods: [POST]
+  #       strip_path: false
+
+  # ── Card Service (port 3002) ❌ needs Postgres ───────────────────────────
+  # Uncomment when Postgres creds are available
+  # - name: card-service
+  #   url: http://host.docker.internal:3002
+  #   routes:
+  #     - name: card-service-routes
+  #       paths:
+  #         - /card
+  #       methods: [GET, POST, PATCH, DELETE]
+  #       strip_path: false
+
+  # ── Transaction Service (port 3011) ❌ needs Postgres ───────────────────
+  # Uncomment when Postgres creds are available
+  # - name: transaction-service
+  #   url: http://host.docker.internal:3011
+  #   routes:
+  #     - name: transactions
+  #       paths:
+  #         - /transactions
+  #       methods: [GET, POST]
+  #       strip_path: false
+
+  # ── Fare Service (port 3004) ❌ needs Postgres ───────────────────────────
+  # Uncomment when Postgres creds are available
+  # - name: fare-service
+  #   url: http://host.docker.internal:3004
+  #   routes:
+  #     - name: fares
+  #       paths:
+  #         - /fares
+  #       methods: [GET]
+  #       strip_path: false
+
+  # ── Route Cache Service (port 3010) ❌ needs Mongo ──────────────────────
+  # Uncomment when MONGO_URI is available
+  # - name: route-cache-service
+  #   url: http://host.docker.internal:3010
+  #   routes:
+  #     - name: route-cache
+  #       paths:
+  #         - /route-cache
+  #       methods: [GET, POST, DELETE]
+  #       strip_path: false
+
+# =============================================================================
+# GLOBAL PLUGINS — apply to all services
+# =============================================================================
+plugins:
+
+  # Prometheus metrics at http://localhost:8081/metrics
+  - name: prometheus
+    config:
+      status_code_metrics: true
+      latency_metrics: true
+      bandwidth_metrics: true
+      upstream_health_metrics: true
+
+  # Adds X-Correlation-ID to every request — trace across services in Grafana
+  - name: correlation-id
+    config:
+      header_name: X-Correlation-ID
+      generator: uuid
+      echo_downstream: true
+
+  # CORS — allow your React frontend to call Kong
+  - name: cors
+    config:
+      origins:
+        - "http://localhost:3000"   # React / API gateway dev
+        - "http://localhost:5173"   # Vite dev server
+      methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
+      headers:
+        - Accept
+        - Authorization
+        - Content-Type
+        - X-Correlation-ID
+      exposed_headers:
+        - X-Correlation-ID
+      credentials: true
+      max_age: 3600

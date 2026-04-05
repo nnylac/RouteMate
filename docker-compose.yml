@@ -5,7 +5,7 @@ services:
     container_name: my-mongo
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
     ports:
       - "${MONGO_PORT}:27017"
@@ -40,7 +40,45 @@ services:
     ports:
       - "8080:8000" # Public API Gateway port
       - "8081:8001" # Admin API (for internal use)
-
+  # ── Monitoring: Prometheus ─────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: route-mate-prometheus
+    restart: always
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheusdata:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--web.enable-lifecycle"       # allows POST /-/reload to hot-reload config
+    ports:
+      - "9090:9090"   # Prometheus UI
+    depends_on:
+      - kong
+  # ── Monitoring: Grafana ────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: route-mate-grafana
+    restart: always
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin      # Change this for production!
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafanadata:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3001:3000"   # Grafana UI at http://localhost:3001
+    depends_on:
+      - prometheus
+ 
+# ── Volumes ────────────────────────────────────────────────────────────────────
+ 
 volumes:
   mongodata:
   pgdata:
+  prometheusdata:
+  grafanadata:
