@@ -6,27 +6,28 @@ RouteMate is a microservices-based transport platform that supports route planni
 
 ```bash
 routemate/
-├─ package.json
-├─ README.md
-├─ apps/
-│  ├─ api-gateway/
-│  ├─ arrival-timing-service/
-│  ├─ card-orchestrator-service/
-│  ├─ card-service/
-│  ├─ fare-comparison-service/
-│  ├─ fare-service/
-│  ├─ maps-wrapper-service/
-│  ├─ notification-service/
-│  ├─ payment-wrapper-service/
-│  ├─ ride-hailing-aggregator-service/
-│  ├─ ride-hailing-wrapper/
-│  ├─ route-cache-service/
-│  ├─ transaction-service/
-│  └─ user-service/
-├─ frontend/
+|-- package.json
+|-- README.md
+|-- apps/
+|   |-- api-gateway/
+|   |-- arrival-timing-service/
+|   |-- card-orchestrator-service/
+|   |-- card-service/
+|   |-- fare-comparison-service/
+|   |-- fare-service/
+|   |-- maps-wrapper-service/
+|   |-- notification-service/
+|   |-- payment-wrapper-service/
+|   |-- ride-hailing-aggregator-service/
+|   |-- ride-hailing-wrapper/
+|   |-- route-cache-service/
+|   |-- transaction-service/
+|   `-- user-service/
+`-- routemate-frontend/
 ```
+
 ## Tech Stack
-Frontend: React + Typescript
+Frontend: React + TypeScript (`routemate-frontend/`)
 Backend: NestJS
 Databases: PostgreSQL and MongoDB
 Containerisation: Docker Compose
@@ -74,7 +75,6 @@ POSTGRES_PASSWORD=your_postgres_password
 POSTGRES_DB=transaction_service_db
 ```
 
-
 ```bash
 PORT=3010
 
@@ -92,4 +92,3 @@ nest start <service-name>
 # example
 nest start transaction-service
 ```
-

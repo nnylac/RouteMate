@@ -1,0 +1,6 @@
+<svg width="180" height="48" viewBox="0 0 180 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="1.5" y="1.5" width="177" height="45" rx="14.5" fill="white" stroke="black" stroke-width="3"/>
+  <circle cx="31" cy="24" r="10" fill="black"/>
+  <path d="M37 17C36 15.4 34.5 14.5 33 14C33.4 12.7 34.6 11.5 36 11C35 10.6 33.1 11 31.8 12.5C30.5 11.3 28.7 10.9 27.5 11.7C25 13.3 24 17 25.8 20C27.2 22.2 28.5 25 30.6 25C31.6 25 32.3 24.7 33.1 24.7C33.9 24.7 34.4 25 35.5 25C37.2 25 38.3 23.1 39.4 21.3C37.2 20.3 36.2 18.1 37 17Z" fill="black"/>
+  <text x="55" y="33" fill="black" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="600">Pay</text>
+</svg>
