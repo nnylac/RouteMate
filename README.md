@@ -188,10 +188,10 @@ All external traffic should go through Kong on port **8080**. Direct service por
 |---|---|---|
 | Kong Admin API | http://localhost:8081 | — |
 | Prometheus | http://localhost:9090 | — |
-| Grafana | http://localhost:3001 | admin / admin |
+| Grafana | http://localhost:3015 | admin / admin |
 
 To view Kong metrics in Grafana, import dashboard ID **7424** (official Kong dashboard):
-1. Open http://localhost:3001
+1. Open http://localhost:3015
 2. Dashboards → New → Import
 3. Enter ID `7424` → Load → select Prometheus datasource → Import
 
