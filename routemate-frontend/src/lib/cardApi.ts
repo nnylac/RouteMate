@@ -1,5 +1,5 @@
 import { apiRequest } from '@/lib/api';
-import type { CardInfo } from '@/types';
+import type { CardInfo, CardType } from '@/types';
 
 interface BackendCard {
   _id: string;
@@ -23,6 +23,7 @@ function toCardInfo(card: BackendCard, index: number): CardInfo {
     label: index === 0 ? 'my card' : `card ${index + 1}`,
     balance: Number(card.balance ?? 0),
     cardNumber: formatCardNumber(card.cardNumber),
+    cardType: (card.cardType ?? 'adult') as CardType,
   };
 }
 
@@ -35,7 +36,7 @@ export async function getCardsByUser(userId: string): Promise<CardInfo[]> {
 
 export async function createCard(payload: {
   userId: string;
-  cardType: 'adult' | 'student' | 'senior';
+  cardType: CardType;
 }): Promise<CardInfo> {
   const card = await apiRequest<BackendCard>('/card-orchestrator/cards', {
     method: 'POST',

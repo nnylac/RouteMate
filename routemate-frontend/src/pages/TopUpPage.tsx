@@ -15,6 +15,15 @@ const paymentOptions = [
   { id: 'apple-pay', label: 'Apple Pay', logo: applePayLogo, available: false, selected: false },
 ];
 
+function parseTopUpAmount(value: string) {
+  if (!value || value === '.') {
+    return null;
+  }
+
+  const parsedAmount = Number(value);
+  return Number.isFinite(parsedAmount) ? parsedAmount : null;
+}
+
 export function TopUpPage() {
   const navigate = useNavigate();
   const { cards, topUpCard } = useCards();
@@ -22,13 +31,13 @@ export function TopUpPage() {
   const [amountError, setAmountError] = useState('');
 
   function handleAmountChange(nextValue: string) {
-    if (/^\d*$/.test(nextValue)) {
+    if (/^\d*(\.\d{0,2})?$/.test(nextValue)) {
       setAmount(nextValue);
       setAmountError(nextValue ? '' : 'Please enter a top up amount.');
       return;
     }
 
-    setAmountError('Only numbers are allowed.');
+    setAmountError('Enter a valid amount with up to 2 decimal places.');
   }
 
   function handlePresetClick(nextAmount: number) {
@@ -42,9 +51,9 @@ export function TopUpPage() {
       return;
     }
 
-    const parsedAmount = Number(amount);
+    const parsedAmount = parseTopUpAmount(amount);
 
-    if (parsedAmount <= 0) {
+    if (parsedAmount === null || parsedAmount <= 0) {
       setAmountError('Top up amount must be more than 0.');
       return;
     }
@@ -53,7 +62,7 @@ export function TopUpPage() {
     navigate('/top-up-success');
   }
 
-  const selectedAmount = amount ? Number(amount) : null;
+  const selectedAmount = parseTopUpAmount(amount);
 
   return (
     <div className="page">
@@ -91,7 +100,7 @@ export function TopUpPage() {
               className={`preset-chip ${amount === String(presetAmount) ? 'preset-chip--active' : ''}`}
               onClick={() => handlePresetClick(presetAmount)}
             >
-              $ {presetAmount}
+              $ {presetAmount.toFixed(2)}
             </button>
           ))}
         </div>
@@ -123,9 +132,9 @@ export function TopUpPage() {
         </div>
       </section>
 
-      <button className="success-button" onClick={handleTopUp}>
+      <button type="button" className="success-button" onClick={handleTopUp}>
         <span>Top Up</span>
-        <span>{selectedAmount !== null ? `$ ${selectedAmount}` : '$ --'}</span>
+        <span>{selectedAmount !== null ? `$ ${selectedAmount.toFixed(2)}` : '$ --'}</span>
         <span>→</span>
       </button>
     </div>

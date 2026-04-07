@@ -24,6 +24,11 @@ html, body, #root {
   background: var(--bg);
 }
 
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
 body {
   color: #111;
 }
@@ -66,10 +71,17 @@ a {
 }
 
 .page-content {
+  width: 100%;
   padding-bottom: 100px;
 }
 
 .page {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   padding: 20px 20px 32px;
 }
 
@@ -186,6 +198,7 @@ a {
 .stack-lg { gap: 18px; }
 
 .page-section {
+  width: 100%;
   margin-top: 18px;
 }
 
@@ -619,7 +632,10 @@ a {
 .bottom-nav {
   position: fixed;
   bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: min(100%, 430px);
+  z-index: 50;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   background: rgba(255,255,255,0.82);
@@ -670,7 +686,8 @@ a {
 }
 
 .wallet-card__label,
-.wallet-card__balance {
+.wallet-card__balance,
+.wallet-card__type {
   position: relative;
   z-index: 1;
 }
@@ -695,13 +712,23 @@ a {
   margin-bottom: 14px;
 }
 
+.wallet-card__type {
+  position: absolute;
+  right: 16px;
+  bottom: 14px;
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(17, 17, 17, 0.05);
+  text-transform: uppercase;
+}
+
 .top-up-card-preview {
   position: relative;
   overflow: hidden;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
   min-height: 138px;
   padding: 20px 24px;
   border-radius: 28px;
@@ -723,12 +750,14 @@ a {
 }
 
 .top-up-card-preview__left {
-  align-self: center;
+  display: grid;
+  justify-items: start;
+  gap: 10px;
 }
 
 .top-up-card-preview__right {
   display: grid;
-  justify-items: end;
+  justify-items: center;
   gap: 4px;
 }
 
@@ -738,13 +767,24 @@ a {
   text-transform: lowercase;
 }
 
+.top-up-card-preview__type {
+  margin-top: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: rgba(17, 17, 17, 0.4);
+  text-transform: uppercase;
+}
+
 .top-up-card-preview__caption {
   font-size: 0.95rem;
+  text-align: center;
 }
 
 .top-up-card-preview__balance {
   font-size: 2.1rem;
   line-height: 1;
+  text-align: center;
 }
 
 .card-link-button {
@@ -770,6 +810,7 @@ a {
 }
 
 .empty-state {
+  width: 100%;
   display: grid;
   gap: 12px;
   justify-items: center;
@@ -1207,6 +1248,7 @@ a {
 }
 
 .profile-actions {
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 10px;

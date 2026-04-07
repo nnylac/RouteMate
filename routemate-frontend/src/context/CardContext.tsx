@@ -2,7 +2,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { useLocation } from 'react-router-dom';
 import { createCard as createCardRequest, getCardsByUser, topUpCardRequest } from '@/lib/cardApi';
 import type { User } from '@/lib/userApi';
-import { CardInfo } from '@/types';
+import type { CardInfo, CardType } from '@/types';
 
 interface CardContextValue {
   cards: CardInfo[];
@@ -10,7 +10,7 @@ interface CardContextValue {
   errorMessage: string;
   latestTopUpAmount: number | null;
   refreshCards: () => Promise<void>;
-  createCard: (cardType: 'adult' | 'student' | 'senior') => Promise<CardInfo>;
+  createCard: (cardType: CardType) => Promise<CardInfo>;
   topUpCard: (cardId: string, amount: number) => Promise<void>;
 }
 
@@ -57,7 +57,7 @@ export function CardProvider({ children }: { children: ReactNode }) {
     void refreshCards();
   }, [location.pathname, refreshCards]);
 
-  async function createCard(cardType: 'adult' | 'student' | 'senior') {
+  async function createCard(cardType: CardType) {
     const storedUser = localStorage.getItem('routemate-user');
 
     if (!storedUser) {

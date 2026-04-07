@@ -1,4 +1,5 @@
 export type NavItemKey = 'home' | 'routes' | 'cards' | 'profile';
+export type CardType = 'adult' | 'student' | 'senior';
 
 export interface SavedRoute {
   id: string;
@@ -15,6 +16,7 @@ export interface CardInfo {
   label: string;
   balance: number;
   cardNumber: string;
+  cardType: CardType;
 }
 
 export interface RouteOption {

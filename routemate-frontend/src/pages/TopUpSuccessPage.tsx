@@ -1,12 +1,20 @@
 import { Tick02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useCards } from '@/context/CardContext';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export function TopUpSuccessPage() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { cards, latestTopUpAmount } = useCards();
-  const currentCard = cards[0];
+  const selectedCardId =
+    typeof location.state === 'object' &&
+    location.state !== null &&
+    'cardId' in location.state &&
+    typeof location.state.cardId === 'string'
+      ? location.state.cardId
+      : null;
+  const currentCard = cards.find((card) => card.id === selectedCardId) ?? cards[0];
 
   return (
     <div className="page page--centered">

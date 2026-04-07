@@ -5,12 +5,20 @@ import { PageTopBar } from '@/components/common/PageTopBar';
 import { TransactionItem } from '@/components/common/TransactionItem';
 import { useCards } from '@/context/CardContext';
 import { transactions } from '@/data/mockData';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export function CardDetailsPage() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { cards } = useCards();
-  const currentCard = cards[0];
+  const selectedCardId =
+    typeof location.state === 'object' &&
+    location.state !== null &&
+    'cardId' in location.state &&
+    typeof location.state.cardId === 'string'
+      ? location.state.cardId
+      : null;
+  const currentCard = cards.find((card) => card.id === selectedCardId) ?? cards[0];
 
   if (!currentCard) {
     return (
@@ -19,7 +27,7 @@ export function CardDetailsPage() {
         <section className="empty-state page-section">
           <h2 className="section-title">No card found</h2>
           <p className="section-subtitle">Create a card first before viewing card details.</p>
-          <button className="primary-button primary-button--pill" onClick={() => navigate('/cards/add')}>
+          <button type="button" className="primary-button primary-button--pill" onClick={() => navigate('/cards/add')}>
             Add Card
           </button>
         </section>
@@ -32,7 +40,12 @@ export function CardDetailsPage() {
       <PageTopBar title="My Cards" titleAlign="left" showBack showNotifications={false} />
       <div className="card-detail-header page-section">
         <CardPreview card={currentCard} />
-        <button className="top-right-action" onClick={() => navigate('/top-up')} aria-label="Top up card">
+        <button
+          type="button"
+          className="top-right-action"
+          onClick={() => navigate('/top-up', { state: { cardId: currentCard.id } })}
+          aria-label="Top up card"
+        >
           <HugeiconsIcon icon={AddMoneyCircleIcon} size={24} strokeWidth={1.8} />
         </button>
       </div>

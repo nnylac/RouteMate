@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import applePayLogo from '@/assets/payment-logos/apple-pay.svg';
 import dbsPaylahLogo from '@/assets/payment-logos/dbs-paylah.svg';
 import stripeLogo from '@/assets/payment-logos/stripe.svg';
@@ -15,22 +15,39 @@ const paymentOptions = [
   { id: 'apple-pay', label: 'Apple Pay', logo: applePayLogo, available: false, selected: false },
 ];
 
+function parseTopUpAmount(value: string) {
+  if (!value || value === '.') {
+    return null;
+  }
+
+  const parsedAmount = Number(value);
+  return Number.isFinite(parsedAmount) ? parsedAmount : null;
+}
+
 export function TopUpPageConnected() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { cards, topUpCard } = useCards();
   const [amount, setAmount] = useState('10');
   const [amountError, setAmountError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const currentCard = cards[0];
+  const selectedCardId =
+    typeof location.state === 'object' &&
+    location.state !== null &&
+    'cardId' in location.state &&
+    typeof location.state.cardId === 'string'
+      ? location.state.cardId
+      : null;
+  const currentCard = cards.find((card) => card.id === selectedCardId) ?? cards[0];
 
   function handleAmountChange(nextValue: string) {
-    if (/^\d*$/.test(nextValue)) {
+    if (/^\d*(\.\d{0,2})?$/.test(nextValue)) {
       setAmount(nextValue);
       setAmountError(nextValue ? '' : 'Please enter a top up amount.');
       return;
     }
 
-    setAmountError('Only numbers are allowed.');
+    setAmountError('Enter a valid amount with up to 2 decimal places.');
   }
 
   function handlePresetClick(nextAmount: number) {
@@ -49,9 +66,9 @@ export function TopUpPageConnected() {
       return;
     }
 
-    const parsedAmount = Number(amount);
+    const parsedAmount = parseTopUpAmount(amount);
 
-    if (parsedAmount <= 0) {
+    if (parsedAmount === null || parsedAmount <= 0) {
       setAmountError('Top up amount must be more than 0.');
       return;
     }
@@ -60,7 +77,7 @@ export function TopUpPageConnected() {
 
     try {
       await topUpCard(currentCard.id, parsedAmount);
-      navigate('/top-up-success');
+      navigate('/top-up-success', { state: { cardId: currentCard.id } });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to top up card.';
       setAmountError(message);
@@ -69,7 +86,7 @@ export function TopUpPageConnected() {
     }
   }
 
-  const selectedAmount = amount ? Number(amount) : null;
+  const selectedAmount = parseTopUpAmount(amount);
 
   return (
     <div className="page">
@@ -80,7 +97,7 @@ export function TopUpPageConnected() {
         <section className="empty-state page-section">
           <h2 className="section-title">No card found</h2>
           <p className="section-subtitle">Create a card first before topping up.</p>
-          <button className="primary-button primary-button--pill" onClick={() => navigate('/cards/add')}>
+          <button type="button" className="primary-button primary-button--pill" onClick={() => navigate('/cards/add')}>
             Add Card
           </button>
         </section>
@@ -118,7 +135,7 @@ export function TopUpPageConnected() {
                 className={`preset-chip ${amount === String(presetAmount) ? 'preset-chip--active' : ''}`}
                 onClick={() => handlePresetClick(presetAmount)}
               >
-                $ {presetAmount}
+                $ {presetAmount.toFixed(2)}
               </button>
             ))}
           </div>
@@ -152,12 +169,13 @@ export function TopUpPageConnected() {
       ) : null}
 
       <button
+        type="button"
         className="success-button"
         onClick={() => void handleTopUp()}
         disabled={!currentCard || isSubmitting}
       >
         <span>Top Up</span>
-        <span>{selectedAmount !== null ? `$ ${selectedAmount}` : '$ --'}</span>
+        <span>{selectedAmount !== null ? `$ ${selectedAmount.toFixed(2)}` : '$ --'}</span>
         <span>&rarr;</span>
       </button>
     </div>

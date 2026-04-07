@@ -84,6 +84,7 @@ export const cards: CardInfo[] = [
     label: 'my card',
     balance: 24.67,
     cardNumber: '1000 2000 3000 4567',
+    cardType: 'adult',
   },
 ];
 
