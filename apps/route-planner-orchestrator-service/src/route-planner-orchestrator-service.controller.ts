@@ -7,8 +7,6 @@ export class RoutePlannerOrchestratorServiceController {
     private readonly routePlannerOrchestratorServiceService: RoutePlannerOrchestratorServiceService,
   ) {}
 
-  // Step 1: User enters origin + destination
-  // Gets all route options enriched with arrival timings, saves to route-cache
   @Post('search')
   async searchRoutes(
     @Body('user_id') user_id: number,
@@ -22,7 +20,6 @@ export class RoutePlannerOrchestratorServiceController {
     );
   }
 
-  // Step 2: User selects a route option — locks it in route-cache
   @Patch('select')
   async selectRoute(
     @Body('route_id') route_id: number,
@@ -34,7 +31,6 @@ export class RoutePlannerOrchestratorServiceController {
     );
   }
 
-  // Fetch saved routes for a user
   @Get('routes')
   async getRoutes(
     @Query('user_id') user_id: number,
@@ -45,6 +41,18 @@ export class RoutePlannerOrchestratorServiceController {
       user_id,
       origin,
       destination,
+    );
+  }
+
+  // New endpoint — simulate a line disruption
+  @Post('disrupt')
+  async handleDisruption(
+    @Body('route_id') route_id: number,
+    @Body('disrupted_line') disrupted_line: string,
+  ) {
+    return this.routePlannerOrchestratorServiceService.handleDisruption(
+      route_id,
+      disrupted_line,
     );
   }
 }

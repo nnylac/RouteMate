@@ -2,6 +2,7 @@ export enum RouteSearchStatus {
   GENERATED = 'GENERATED',
   SELECTED = 'SELECTED',
   EXPIRED = 'EXPIRED',
+  DISRUPTED = 'DISRUPTED',
 }
 
 export enum RouteSegmentMode {

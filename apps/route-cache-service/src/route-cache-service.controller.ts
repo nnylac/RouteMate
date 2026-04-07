@@ -54,6 +54,11 @@ export class RouteCacheServiceController {
     );
   }
 
+  @Patch('disrupt')
+  async disruptRoute(@Query('route_id') route_id: number) {
+    return this.routeCacheService.disruptRoute(route_id);
+  }
+
   @Get('user-history')
   async getUserRouteHistory(@Query('user_id') userId: number) {
     return this.routeCacheService.getRoutesByUser(Number(userId));
