@@ -98,6 +98,10 @@ services:
         paths: [/route-cache/user-history]
         methods: [GET]
         strip_path: false
+      - name: route-cache-disrupt
+        paths: [/route-cache/disrupt]
+        methods: [PATCH]
+        strip_path: false
     plugins:
       - name: rate-limiting
         config:
@@ -132,7 +136,7 @@ services:
         paths: [/card-service/cards]
         methods: [GET]
         strip_path: false
-      - name: card-topup
+      - name: card-patch-actions
         paths: [/card-service/cards]
         methods: [PATCH]
         strip_path: false
@@ -159,7 +163,7 @@ services:
         methods: [GET]
         strip_path: false
       - name: transaction-health-db
-        paths: [/transactions/health]
+        paths: [/transactions/health/db]
         methods: [GET]
         strip_path: false
     plugins:
@@ -221,6 +225,10 @@ services:
       - name: route-planner-routes
         paths: [/route-planner/routes]
         methods: [GET]
+        strip_path: false
+      - name: route-planner-disrupt
+        paths: [/route-planner/disrupt]
+        methods: [POST]
         strip_path: false
     plugins:
       - name: rate-limiting
