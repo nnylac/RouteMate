@@ -11,7 +11,7 @@ _transform: true
 
 services:
 
-  # ── User Service (port 3012) ✅ ──────────────────────────────────────────
+  # ── User Service (port 3012) ──────────────────────────────────────────
   - name: user-service
     url: http://host.docker.internal:3012
     connect_timeout: 10000
@@ -24,23 +24,23 @@ services:
         strip_path: false
       - name: user-register
         paths: [/user-service/register]
-        methods: [POST]
+        methods: [POST, OPTIONS]
         strip_path: false
       - name: user-login
         paths: [/user-service/login]
-        methods: [POST]
+        methods: [POST, OPTIONS]
         strip_path: false
       - name: user-list
         paths: [/user-service/users]
-        methods: [GET]
+        methods: [GET, OPTIONS]
         strip_path: false
       - name: user-by-id
         paths: [/user-service/users]
-        methods: [GET, PATCH]
+        methods: [GET, PATCH, OPTIONS]
         strip_path: false
       - name: user-change-password
         paths: [/user-service/users]
-        methods: [PATCH]
+        methods: [PATCH, OPTIONS]
         strip_path: false
     plugins:
       - name: rate-limiting
@@ -49,7 +49,7 @@ services:
           policy: local
           fault_tolerant: true
 
-  # ── Notification Service (port 3006) ✅ ─────────────────────────────────
+  # ── Notification Service (port 3006) ─────────────────────────────────
   - name: notification-service
     url: http://host.docker.internal:3006
     connect_timeout: 10000
@@ -75,7 +75,7 @@ services:
           policy: local
           fault_tolerant: true
 
-  # ── Route Cache Service (port 3010) ✅ ──────────────────────────────────
+  # ── Route Cache Service (port 3010) ──────────────────────────────────
   - name: route-cache-service
     url: http://host.docker.internal:3010
     connect_timeout: 10000
@@ -105,7 +105,7 @@ services:
           policy: local
           fault_tolerant: true
 
-  # ── Card Service (port 3002) ✅ ──────────────────────────────────────────
+  # ── Card Service (port 3002) ──────────────────────────────────────────
   - name: card-service
     url: http://host.docker.internal:3002
     connect_timeout: 10000
@@ -143,7 +143,7 @@ services:
           policy: local
           fault_tolerant: true
 
-  # ── Transaction Service (port 3011) ✅ ──────────────────────────────────
+  # ── Transaction Service (port 3011) ──────────────────────────────────
   - name: transaction-service
     url: http://host.docker.internal:3011
     connect_timeout: 10000
@@ -169,7 +169,7 @@ services:
           policy: local
           fault_tolerant: true
 
-  # ── Fare Service (port 3004) ✅ ──────────────────────────────────────────
+  # ── Fare Service (port 3004) ──────────────────────────────────────────
   - name: fare-service
     url: http://host.docker.internal:3004
     connect_timeout: 10000
@@ -203,7 +203,7 @@ services:
           policy: local
           fault_tolerant: true
 
-  # ── Route Planner Orchestrator (port 3014) ✅ ────────────────────────────
+  # ── Route Planner Orchestrator (port 3014) ────────────────────────────
   - name: route-planner-orchestrator
     url: http://host.docker.internal:3014
     connect_timeout: 10000
@@ -229,7 +229,7 @@ services:
           policy: local
           fault_tolerant: true
 
-  # ── Ride-Hailing Aggregator (port 3008) ✅ ──────────────────────────────
+  # ── Ride-Hailing Aggregator (port 3008) ──────────────────────────────
   - name: ride-hailing-aggregator
     url: http://host.docker.internal:3008
     connect_timeout: 10000
@@ -247,7 +247,7 @@ services:
           policy: local
           fault_tolerant: true
 
-  # ── Ride-Hailing Wrapper (port 3009) ✅ internal ─────────────────────────
+  # ── Ride-Hailing Wrapper (port 3009) internal ─────────────────────────
   - name: ride-hailing-wrapper
     url: http://host.docker.internal:3009
     connect_timeout: 10000
@@ -273,7 +273,7 @@ services:
           policy: local
           fault_tolerant: true
 
-  # ── Arrival Timing Service (port 3013) ✅ ───────────────────────────────
+  # ── Arrival Timing Service (port 3013) ───────────────────────────────
   - name: arrival-timing-service
     url: http://host.docker.internal:3013
     connect_timeout: 10000
@@ -291,7 +291,7 @@ services:
           policy: local
           fault_tolerant: true
 
-  # ── Maps Wrapper Service (port 3005) ✅ ─────────────────────────────────
+  # ── Maps Wrapper Service (port 3005) ─────────────────────────────────
   - name: maps-wrapper-service
     url: http://host.docker.internal:3005
     connect_timeout: 10000
@@ -309,7 +309,7 @@ services:
           policy: local
           fault_tolerant: true
 
-  # ── Card Orchestrator (port 3001) ⚠️ stub ───────────────────────────────
+  # ── Card Orchestrator (port 3001) ───────────────────────────────
   - name: card-orchestrator-service
     url: http://host.docker.internal:3001
     connect_timeout: 10000
@@ -318,7 +318,7 @@ services:
     routes:
       - name: card-orchestrator
         paths: [/card-orchestrator]
-        methods: [GET, POST, PATCH, DELETE]
+        methods: [GET, POST, PATCH, DELETE, OPTIONS]
         strip_path: false
     plugins:
       - name: rate-limiting
@@ -327,7 +327,7 @@ services:
           policy: local
           fault_tolerant: true
 
-  # ── Fare Comparison Service (port 3003) ⚠️ stub ─────────────────────────
+  # ── Fare Comparison Service (port 3003) ─────────────────────────
   - name: fare-comparison-service
     url: http://host.docker.internal:3003
     connect_timeout: 10000
@@ -345,7 +345,7 @@ services:
           policy: local
           fault_tolerant: true
 
-  # ── Payment Wrapper Service (port 3007) ⚠️ stub ─────────────────────────
+  # ── Payment Wrapper Service (port 3007) ─────────────────────────
   - name: payment-wrapper-service
     url: http://host.docker.internal:3007
     connect_timeout: 10000

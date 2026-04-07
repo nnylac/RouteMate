@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 export function TopUpSuccessPage() {
   const navigate = useNavigate();
   const { cards, latestTopUpAmount } = useCards();
+  const currentCard = cards[0];
 
   return (
     <div className="page page--centered">
@@ -15,7 +16,7 @@ export function TopUpSuccessPage() {
       <h1 className="success-title">Top Up Successful</h1>
       <p className="success-subtitle">
         {latestTopUpAmount !== null ? `Added $${latestTopUpAmount.toFixed(2)}. ` : ''}
-        Updated Balance: ${cards[0].balance.toFixed(2)}
+        Updated Balance: ${currentCard ? currentCard.balance.toFixed(2) : '--'}
       </p>
 
       <button className="primary-button primary-button--pill" onClick={() => navigate('/home')}>

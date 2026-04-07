@@ -280,6 +280,22 @@ a {
   margin-top: 20px;
 }
 
+.auth-message {
+  max-width: 340px;
+  align-self: center;
+  text-align: center;
+  font-size: 0.92rem;
+  margin-top: -4px;
+}
+
+.auth-message--error {
+  color: #c45b5b;
+}
+
+.auth-message--success {
+  color: #4e8a62;
+}
+
 .auth-back-button {
   display: inline-flex;
   align-items: center;
@@ -753,6 +769,35 @@ a {
   margin: 22px auto 0;
 }
 
+.empty-state {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.card-type-list {
+  width: 100%;
+  display: grid;
+  gap: 12px;
+  margin: 10px 0 6px;
+}
+
+.card-type-option {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.55);
+  color: #2b2b2b;
+  box-shadow: var(--shadow);
+}
+
+.card-type-option--active {
+  background: #efefef;
+  border: 2px solid #2b2b2b;
+}
+
 .transport-toggle {
   display: flex;
   gap: 8px;
@@ -1159,6 +1204,13 @@ a {
 .profile-action-button {
   align-self: flex-start;
   margin-top: 12px;
+}
+
+.profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
 }
 
 .profile-edit-pencil {

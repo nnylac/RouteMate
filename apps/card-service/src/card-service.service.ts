@@ -24,8 +24,9 @@ export class CardService {
     let cardNumber = '';
 
     while (exists) {
-      const randomDigits = Math.floor(10000000 + Math.random() * 90000000);
-      cardNumber = `CARD${randomDigits}`;
+      cardNumber = Array.from({ length: 16 }, () =>
+        Math.floor(Math.random() * 10).toString(),
+      ).join('');
 
       const existingCard = await this.cardModel.findOne({ cardNumber }).exec();
       exists = !!existingCard;

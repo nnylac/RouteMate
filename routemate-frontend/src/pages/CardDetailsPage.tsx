@@ -10,12 +10,28 @@ import { useNavigate } from 'react-router-dom';
 export function CardDetailsPage() {
   const navigate = useNavigate();
   const { cards } = useCards();
+  const currentCard = cards[0];
+
+  if (!currentCard) {
+    return (
+      <div className="page">
+        <PageTopBar title="My Cards" titleAlign="left" showBack showNotifications={false} />
+        <section className="empty-state page-section">
+          <h2 className="section-title">No card found</h2>
+          <p className="section-subtitle">Create a card first before viewing card details.</p>
+          <button className="primary-button primary-button--pill" onClick={() => navigate('/cards/add')}>
+            Add Card
+          </button>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="page">
       <PageTopBar title="My Cards" titleAlign="left" showBack showNotifications={false} />
       <div className="card-detail-header page-section">
-        <CardPreview card={cards[0]} />
+        <CardPreview card={currentCard} />
         <button className="top-right-action" onClick={() => navigate('/top-up')} aria-label="Top up card">
           <HugeiconsIcon icon={AddMoneyCircleIcon} size={24} strokeWidth={1.8} />
         </button>
