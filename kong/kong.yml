@@ -265,15 +265,15 @@ services:
       - name: ride-hailing-wrapper-grab
         paths: [/internal/grab/quotes]
         methods: [GET]
-        strip_path: true
+        strip_path: false
       - name: ride-hailing-wrapper-gojek
         paths: [/internal/gojek/quotes]
         methods: [GET]
-        strip_path: true
+        strip_path: false
       - name: ride-hailing-wrapper-tada
         paths: [/internal/tada/quotes]
         methods: [GET]
-        strip_path: true
+        strip_path: false
     plugins:
       - name: rate-limiting
         config:
