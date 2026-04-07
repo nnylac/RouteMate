@@ -71,7 +71,7 @@ services:
       - grafanadata:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
     ports:
-      - "3001:3000"   # Grafana UI at http://localhost:3001
+      - "3015:3000"   # Grafana UI at http://localhost:3015
     depends_on:
       - prometheus
  
