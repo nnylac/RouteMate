@@ -8,49 +8,30 @@ RouteMate is a microservices-based public transport planning platform for commut
 routemate/
 ├─ package.json
 ├─ README.md
-├─ .env                          # root env (copy from .env.example)
-├─ .env.example                  # template — do not put real credentials here
-├─ docker-compose.yml
-├─ kong/
-│  └─ kong.yml                   # Kong declarative config
-├─ prometheus/
-│  └─ prometheus.yml             # Prometheus scrape config
-├─ grafana/
-│  └─ provisioning/
-│     └─ datasources/
-│        └─ prometheus.yml       # Grafana auto-connects to Prometheus
 ├─ apps/
-│  ├─ api-gateway/               # :3000
-│  ├─ arrival-timing-service/    # :3013
-│  ├─ card-orchestrator-service/ # :3001
-│  ├─ card-service/              # :3002
-│  ├─ fare-comparison-service/   # :3003
-│  ├─ fare-service/              # :3004
-│  ├─ maps-wrapper-service/      # :3005
-│  ├─ notification-service/      # :3006
-│  ├─ payment-wrapper-service/   # :3007
-│  ├─ ride-hailing-aggregator-service/ # :3008
-│  ├─ ride-hailing-wrapper-service/    # :3009
-│  ├─ ride-hailing-mocked-api/   # :4000 (JSON Server)
-│  ├─ route-cache-service/       # :3010
-│  ├─ route-planner-orchestrator-service/ # :3014
-│  ├─ transaction-service/       # :3011
-│  └─ user-service/              # :3012
-└─ frontend/
+│  ├─ api-gateway/
+│  ├─ arrival-timing-service/
+│  ├─ card-orchestrator-service/
+│  ├─ card-service/
+│  ├─ fare-comparison-service/
+│  ├─ fare-service/
+│  ├─ maps-wrapper-service/
+│  ├─ notification-service/
+│  ├─ payment-wrapper-service/
+│  ├─ ride-hailing-aggregator-service/
+│  ├─ ride-hailing-wrapper/
+│  ├─ route-cache-service/
+│  ├─ transaction-service/
+│  └─ user-service/
+├─ frontend/
 ```
 
 ## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Frontend | React + TypeScript |
-| Backend | NestJS (monorepo) |
-| API Gateway | Kong (DB-less declarative mode) |
-| Databases | PostgreSQL, MongoDB |
-| Containerisation | Docker Compose |
-| Messaging | RabbitMQ |
-| Monitoring | Prometheus + Grafana |
-| Mock APIs | JSON Server |
+Frontend: React + Typescript
+Backend: NestJS
+Databases: PostgreSQL and MongoDB
+Containerisation: Docker Compose
+Messaging: RabbitMQ
 
 ## Prerequisites
 
@@ -115,25 +96,8 @@ POSTGRES_PORT=5432
 POSTGRES_USER=<your_postgres_user>
 POSTGRES_PASSWORD=<your_postgres_password>
 POSTGRES_DB=transaction_service_db
-
-# apps/user-service/.env
-PORT=3012
-MONGO_URI=mongodb://<user>:<password>@localhost:27017/user_service_db?authSource=admin
 ```
 
-> Services without a database (maps-wrapper, payment-wrapper, ride-hailing etc.) read their port from the root `.env` and do not need a per-service `.env`.
-
-> **Never commit `.env` files.** They are listed in `.gitignore`.
-
-## 3. Start Infrastructure (Docker)
-
-Start all Docker containers (Kong, Prometheus, Grafana, MongoDB, PostgreSQL):
-
-```bash
-docker compose up -d
-```
-
-Reload Kong's config after any changes to `kong/kong.yml`:
 
 ```bash
 curl -X POST http://localhost:8081/config -F config=@kong/kong.yml
@@ -209,37 +173,10 @@ curl -X POST http://localhost:8081/config -F config=@kong/kong.yml
 # 4. Start all services
 npm run start:all
 
-# 5. Verify Kong is routing correctly
-curl -X POST http://localhost:8080/ridehail/quotes \
-  -H "Content-Type: application/json" \
-  -d "{}"
+# to start one service only
+nest start <service-name>
+
+# example
+nest start transaction-service
 ```
 
-## 8. Troubleshooting
-
-**Kong not reachable (port 8080/8081 refused)**
-→ Docker Desktop stopped. Reopen it, then run `docker compose up -d`.
-
-**Service returning 502 Bad Gateway**
-→ The NestJS service for that route isn't running. Run `npm run start:all`.
-
-**Container name conflict on `docker compose up`**
-```bash
-docker rm -f route-mate-gateway my-mongo my-postgres
-docker compose up -d
-```
-
-**Port already in use (EADDRINUSE)**
-```bash
-# Windows
-taskkill /F /IM node.exe
-npm run start:all
-
-# Mac/Linux
-pkill -f node
-npm run start:all
-```
-
-**Mongo connection refused**
-→ Check `docker ps | grep mongo` — make sure it shows `0.0.0.0:27017->27017/tcp`.
-→ Check that `MONGO_URI` in per-service `.env` uses port `27017`.

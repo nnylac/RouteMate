@@ -259,7 +259,8 @@ export class FareService {
   }
 
   async calculateFare(dto: CalculateFareDto): Promise<PtFareRule | null> {
-    const distance = dto.distanceKm.toFixed(2);
+    const normalizedDistanceKm = Math.ceil(dto.distanceKm * 10) / 10;
+    const distance = normalizedDistanceKm.toFixed(2);
 
     const query = this.ptFareRuleRepository
       .createQueryBuilder('rule')
