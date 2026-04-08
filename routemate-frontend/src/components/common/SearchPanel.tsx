@@ -1,6 +1,7 @@
 import { ArrowDataTransferVerticalIcon, Location01Icon, Search01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface SearchPanelProps {
   from?: string;
@@ -19,6 +20,7 @@ export function SearchPanel({
   initialTo = '',
   recentSearches = [],
 }: SearchPanelProps) {
+  const navigate = useNavigate();
   const [fromValue, setFromValue] = useState(from ?? initialFrom);
   const [toValue, setToValue] = useState(to ?? initialTo);
   const [activeField, setActiveField] = useState<ActiveField>(null);
@@ -36,6 +38,14 @@ export function SearchPanel({
     document.addEventListener('mousedown', handlePointerDown);
     return () => document.removeEventListener('mousedown', handlePointerDown);
   }, []);
+
+  useEffect(() => {
+    setFromValue(from ?? initialFrom);
+  }, [from, initialFrom]);
+
+  useEffect(() => {
+    setToValue(to ?? initialTo);
+  }, [to, initialTo]);
 
   useEffect(() => {
     if (activeField === 'from') {
@@ -83,6 +93,20 @@ export function SearchPanel({
     setActiveField(null);
   }
 
+  function handleSearch() {
+    const origin = fromValue.trim();
+    const destination = toValue.trim();
+
+    if (!origin || !destination) {
+      return;
+    }
+
+    navigate({
+      pathname: '/routes',
+      search: `?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`,
+    });
+  }
+
   return (
     <div className="search-panel-stack" ref={panelRef}>
       <section className="glass-card search-panel">
@@ -105,6 +129,11 @@ export function SearchPanel({
                 value={fromValue}
                 onChange={(event) => setFromValue(event.target.value)}
                 onFocus={() => setActiveField('from')}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    handleSearch();
+                  }
+                }}
                 placeholder="Choose your starting point"
               />
             </div>
@@ -138,13 +167,22 @@ export function SearchPanel({
                 value={toValue}
                 onChange={(event) => setToValue(event.target.value)}
                 onFocus={() => setActiveField('to')}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    handleSearch();
+                  }
+                }}
                 placeholder="Choose your destination"
               />
             </div>
           </div>
         </div>
 
-        <button type="button" className="primary-button search-panel__button">
+        <button
+          type="button"
+          className="primary-button search-panel__button"
+          onClick={handleSearch}
+        >
           <span className="search-panel__button-content">
             <HugeiconsIcon icon={Search01Icon} size={20} strokeWidth={1.8} />
             <span>Search</span>

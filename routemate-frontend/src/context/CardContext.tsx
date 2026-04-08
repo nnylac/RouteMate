@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { createCard as createCardRequest, getCardsByUser, topUpCardRequest } from '@/lib/cardApi';
+import { createCard as createCardRequest, deductFareRequest, getCardsByUser, topUpCardRequest } from '@/lib/cardApi';
 import type { User } from '@/lib/userApi';
 import type { CardInfo, CardType } from '@/types';
 
@@ -12,6 +12,7 @@ interface CardContextValue {
   refreshCards: () => Promise<void>;
   createCard: (cardType: CardType) => Promise<CardInfo>;
   topUpCard: (cardId: string, amount: number) => Promise<void>;
+  deductFare: (cardId: string, amount: number) => Promise<void>;
 }
 
 const CardContext = createContext<CardContextValue | null>(null);
@@ -96,6 +97,20 @@ export function CardProvider({ children }: { children: ReactNode }) {
     setLatestTopUpAmount(amount);
   }
 
+  async function deductFare(cardId: string, amount: number) {
+    const updatedCard = await deductFareRequest(cardId, amount);
+    setCards((currentCards) =>
+      currentCards.map((card, index) =>
+        card.id === cardId
+          ? {
+              ...updatedCard,
+              label: index === 0 ? 'my card' : `card ${index + 1}`,
+            }
+          : card,
+      ),
+    );
+  }
+
   const value = useMemo(
     () => ({
       cards,
@@ -105,6 +120,7 @@ export function CardProvider({ children }: { children: ReactNode }) {
       refreshCards,
       createCard,
       topUpCard,
+      deductFare,
     }),
     [cards, errorMessage, isLoading, latestTopUpAmount, refreshCards],
   );

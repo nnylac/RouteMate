@@ -10,13 +10,17 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
+export async function apiRequest<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
+
+  const headers = new Headers(init?.headers);
+  headers.set('Content-Type', 'application/json');
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init?.headers ?? {}),
-    },
     ...init,
+    headers,
   });
 
   const contentType = response.headers.get('content-type') ?? '';

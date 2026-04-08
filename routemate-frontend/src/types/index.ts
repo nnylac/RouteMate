@@ -22,9 +22,35 @@ export interface CardInfo {
 export interface RouteOption {
   id: string;
   durationLabel: string;
-  badges: string[];
+  badges: RouteBadge[];
   fare?: number | null;
   arrivalTime?: string;
+}
+
+export interface RouteSegmentDetail {
+  segmentId: number;
+  mode: 'WALK' | 'BUS' | 'MRT' | 'DRIVING';
+  fromStop: string | null;
+  toStop: string | null;
+  durationMins: number;
+  distanceKm: number;
+  lineOrService: string | null;
+  segmentOrder: number;
+  arrivalTiming?: string | null;
+}
+
+export interface DetailedRouteOption extends RouteOption {
+  summary?: string;
+  totalDurationMins: number;
+  totalDistanceKm: number;
+  transferCount: number;
+  isPublicTransport: boolean;
+  segments: RouteSegmentDetail[];
+}
+
+export interface RouteBadge {
+  kind: 'walk' | 'bus' | 'mrt';
+  value: string;
 }
 
 export interface JourneyStop {

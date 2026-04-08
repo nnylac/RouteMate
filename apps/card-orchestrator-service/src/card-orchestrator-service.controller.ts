@@ -29,4 +29,9 @@ export class CardOrchestratorServiceController {
   async topUpCard(@Param('id') id: string, @Body() body: { amount: number }) {
     return this.cardOrchestratorServiceService.topUpCard(id, body.amount);
   }
+
+  @Patch('cards/:id/deduct')
+  async deductFare(@Param('id') id: string, @Body() body: { amount: number }) {
+    return this.cardOrchestratorServiceService.deductFare(id, body.amount);
+  }
 }

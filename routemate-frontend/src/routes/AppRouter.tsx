@@ -6,7 +6,7 @@ import { HomePage } from '@/pages/HomePage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
 import { CardsPage } from '@/pages/CardsPage';
 import { RouteResultsPage } from '@/pages/RouteResultsPage';
-import { RouteDetailsPage } from '@/pages/RouteDetailsPage';
+import { RouteDetailsPageCurrent } from '@/pages/RouteDetailsPageCurrent';
 import { JourneyProgressPage } from '@/pages/JourneyProgressPage';
 import { CardDetailsPage } from '@/pages/CardDetailsPage';
 import { TopUpPageConnected } from '@/pages/TopUpPageConnected';
@@ -29,7 +29,7 @@ export function AppRouter() {
         <Route path="/cards" element={<CardsPage />} />
         <Route path="/cards/add" element={<AddCardPage />} />
         <Route path="/routes" element={<RouteResultsPage />} />
-        <Route path="/route-details" element={<RouteDetailsPage />} />
+        <Route path="/route-details" element={<RouteDetailsPageCurrent />} />
         <Route path="/journey" element={<JourneyProgressPage />} />
         <Route path="/card-details" element={<CardDetailsPage />} />
         <Route path="/top-up" element={<TopUpPageConnected />} />

@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import { PageTopBar } from '@/components/common/PageTopBar';
 import { SearchPanel } from '@/components/common/SearchPanel';
 import { useCards } from '@/context/CardContext';
@@ -5,12 +6,15 @@ import { journeyStops } from '@/data/mockData';
 import { AccordionStop } from '@/components/common/AccordionStop';
 
 export function JourneyProgressPage() {
+  const [searchParams] = useSearchParams();
   const { cards } = useCards();
+  const origin = searchParams.get('origin') ?? 'Jurong East';
+  const destination = searchParams.get('destination') ?? 'SMU';
 
   return (
     <div className="page">
       <PageTopBar showBack />
-      <SearchPanel from="Jurong East" to="SMU" />
+      <SearchPanel from={origin} to={destination} />
 
       <div className="route-header-inline">44 min · 6 · EW · 190 · 4:40 PM · 📱</div>
 

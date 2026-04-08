@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Inject,
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
@@ -7,6 +11,44 @@ const MAPS_WRAPPER_URL = 'http://localhost:3005';
 const ARRIVAL_TIMING_URL = 'http://localhost:3013';
 const ROUTE_CACHE_URL = 'http://localhost:3010';
 const NOTIFICATION_URL = 'http://localhost:3006';
+const FARE_SERVICE_URL = 'http://localhost:3004';
+
+type SupportedFareCategory = 'adult_card' | 'student_card' | 'senior_card';
+
+type EnrichedSegment = {
+  segment_id: number;
+  mode: string;
+  from_stop: string | null;
+  to_stop: string | null;
+  duration_mins: number;
+  distance_km: number;
+  line_or_service: string | null;
+  segment_order: number;
+  arrival_timing: unknown;
+};
+
+type SegmentFareBreakdown = {
+  segment_id: number;
+  segment_order: number;
+  mode: 'BUS' | 'MRT';
+  line_or_service: string | null;
+  distance_km: number;
+  cumulative_distance_km: number;
+  fare_basis_mode: 'trunk_bus' | 'mrt_lrt';
+  fares: Record<
+    SupportedFareCategory,
+    {
+      incremental: number;
+      cumulative: number;
+    }
+  >;
+};
+
+type OptionFareBreakdown = {
+  fare_basis_mode: 'trunk_bus' | 'mrt_lrt' | null;
+  totals: Record<SupportedFareCategory, number>;
+  segments: SegmentFareBreakdown[];
+};
 
 @Injectable()
 export class RoutePlannerOrchestratorServiceService {
@@ -30,6 +72,140 @@ export class RoutePlannerOrchestratorServiceService {
     return 'PUBLIC_TRANSPORT';
   }
 
+  private readonly supportedFareCategories: SupportedFareCategory[] = [
+    'adult_card',
+    'student_card',
+    'senior_card',
+  ];
+
+  private getFareTransportMode(
+    segmentMode: string,
+  ): 'trunk_bus' | 'mrt_lrt' | null {
+    if (segmentMode === 'BUS') {
+      return 'trunk_bus';
+    }
+
+    if (segmentMode === 'MRT') {
+      return 'mrt_lrt';
+    }
+
+    return null;
+  }
+
+  private async lookupFareAmount(
+    transportMode: 'trunk_bus' | 'mrt_lrt',
+    fareCategory: SupportedFareCategory,
+    distanceKm: number,
+  ): Promise<number> {
+    const payload: Record<string, string | number> = {
+      transportMode,
+      fareCategory,
+      distanceKm: Number(distanceKm.toFixed(2)),
+    };
+
+    if (transportMode === 'mrt_lrt') {
+      payload.applicableTime = 'All other timings';
+    }
+
+    const response = await firstValueFrom(
+      this.httpService.post(`${FARE_SERVICE_URL}/fare-service/calculate`, payload),
+    );
+
+    return Number(response.data?.fareAmount ?? 0);
+  }
+
+  private async calculatePublicTransportFares(
+    segments: EnrichedSegment[],
+  ): Promise<OptionFareBreakdown> {
+    const payableSegments = segments.filter(
+      (segment) => segment.mode === 'BUS' || segment.mode === 'MRT',
+    );
+
+    if (payableSegments.length === 0) {
+      return {
+        fare_basis_mode: null,
+        totals: {
+          adult_card: 0,
+          student_card: 0,
+          senior_card: 0,
+        },
+        segments: [],
+      };
+    }
+
+    const fareBasisMode = this.getFareTransportMode(payableSegments[0].mode);
+
+    if (!fareBasisMode) {
+      return {
+        fare_basis_mode: null,
+        totals: {
+          adult_card: 0,
+          student_card: 0,
+          senior_card: 0,
+        },
+        segments: [],
+      };
+    }
+
+    let cumulativeDistanceKm = 0;
+    const runningTotals: Record<SupportedFareCategory, number> = {
+      adult_card: 0,
+      student_card: 0,
+      senior_card: 0,
+    };
+    const fareSegments: SegmentFareBreakdown[] = [];
+
+    for (const segment of payableSegments) {
+      cumulativeDistanceKm += Number(segment.distance_km ?? 0);
+
+      const faresByCategory = await Promise.all(
+        this.supportedFareCategories.map(async (fareCategory) => {
+          const cumulativeFare = await this.lookupFareAmount(
+            fareBasisMode,
+            fareCategory,
+            cumulativeDistanceKm,
+          );
+
+          const previousTotal = runningTotals[fareCategory];
+          const incrementalFare = Number(
+            Math.max(cumulativeFare - previousTotal, 0).toFixed(2),
+          );
+
+          runningTotals[fareCategory] = Number(cumulativeFare.toFixed(2));
+
+          return [
+            fareCategory,
+            {
+              incremental: incrementalFare,
+              cumulative: runningTotals[fareCategory],
+            },
+          ] as const;
+        }),
+      );
+
+      fareSegments.push({
+        segment_id: segment.segment_id,
+        segment_order: segment.segment_order,
+        mode: segment.mode as 'BUS' | 'MRT',
+        line_or_service: segment.line_or_service,
+        distance_km: segment.distance_km,
+        cumulative_distance_km: Number(cumulativeDistanceKm.toFixed(2)),
+        fare_basis_mode: fareBasisMode,
+        fares: Object.fromEntries(faresByCategory) as SegmentFareBreakdown['fares'],
+      });
+    }
+
+    return {
+      fare_basis_mode: fareBasisMode,
+      totals: {
+        adult_card: runningTotals.adult_card,
+        student_card: runningTotals.student_card,
+        senior_card: runningTotals.senior_card,
+      },
+      segments: fareSegments,
+    };
+  }
+
   async searchRoutes(user_id: number, origin: string, destination: string) {
     try {
       const mapsResponse = await firstValueFrom(
@@ -37,13 +213,19 @@ export class RoutePlannerOrchestratorServiceService {
           params: { origin, destination },
         }),
       );
-      const { options } = mapsResponse.data;
+      const { options: rawOptions, driving_option } = mapsResponse.data;
+      const options = rawOptions.filter(
+        (option: any) => option.main_mode !== 'DRIVING',
+      );
 
       const enrichedOptions = await Promise.all(
         options.map(async (option: any) => {
           const enrichedSegments = await Promise.all(
             option.segments.map(async (segment: any, segIndex: number) => {
-              const mappedMode = this.mapMode(segment.mode, segment.line_or_service);
+              const mappedMode = this.mapMode(
+                segment.mode,
+                segment.line_or_service,
+              );
 
               const segmentWithId = {
                 segment_id: segIndex + 1,
@@ -78,6 +260,18 @@ export class RoutePlannerOrchestratorServiceService {
             }),
           );
 
+          const fareBreakdown = option.is_public_transport
+            ? await this.calculatePublicTransportFares(enrichedSegments)
+            : {
+                fare_basis_mode: null,
+                totals: {
+                  adult_card: 0,
+                  student_card: 0,
+                  senior_card: 0,
+                },
+                segments: [],
+              };
+
           const segmentsForCache = enrichedSegments.map(
             ({ arrival_timing, ...rest }) => rest,
           );
@@ -90,6 +284,8 @@ export class RoutePlannerOrchestratorServiceService {
             transfer_count: option.transfer_count,
             main_mode: this.mapMainMode(option.main_mode),
             is_public_transport: option.is_public_transport,
+            fare: fareBreakdown.totals.adult_card,
+            fares: fareBreakdown,
             segments: enrichedSegments,
             segments_for_cache: segmentsForCache,
           };
@@ -129,6 +325,7 @@ export class RoutePlannerOrchestratorServiceService {
         origin_label: origin,
         destination_label: destination,
         options: optionsForFrontend,
+        driving_option,
       };
     } catch (error) {
       console.error('searchRoutes error:', error?.response?.data ?? error);

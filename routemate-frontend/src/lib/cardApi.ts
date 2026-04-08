@@ -60,3 +60,18 @@ export async function topUpCardRequest(
 
   return toCardInfo(card, 0);
 }
+
+export async function deductFareRequest(
+  cardId: string,
+  amount: number,
+): Promise<CardInfo> {
+  const card = await apiRequest<BackendCard>(
+    `/card-orchestrator/cards/${cardId}/deduct`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ amount }),
+    },
+  );
+
+  return toCardInfo(card, 0);
+}

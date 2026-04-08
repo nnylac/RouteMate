@@ -1,26 +1,108 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { RouteModeTabs } from '@/components/common/RouteModeTabs';
 import { PageTopBar } from '@/components/common/PageTopBar';
 import { SearchPanel } from '@/components/common/SearchPanel';
-import { rideHailingOptions } from '@/data/mockData';
+import { recentSearches } from '@/data/mockData';
+import { getRideQuotes, searchRoutes, type RideQuote } from '@/lib/journeyApi';
+
+function formatDuration(minutes: number) {
+  if (minutes >= 60) {
+    return `${Math.floor(minutes / 60)}h ${minutes % 60} min`;
+  }
+
+  return `${minutes} min`;
+}
 
 export function RideHailingPage() {
+  const [searchParams] = useSearchParams();
+  const origin = searchParams.get('origin') ?? 'Jurong East';
+  const destination = searchParams.get('destination') ?? 'SMU';
+  const [busDuration, setBusDuration] = useState<string | null>(null);
+  const [rideDuration, setRideDuration] = useState<string | null>(null);
+  const [rideHailingOptions, setRideHailingOptions] = useState<RideQuote[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadJourneyData() {
+      if (!isCancelled) {
+        setIsLoading(true);
+        setBusDuration(null);
+        setRideDuration(null);
+        setRideHailingOptions([]);
+      }
+
+      const [routeResult, rideResult] = await Promise.allSettled([
+        searchRoutes(origin, destination),
+        getRideQuotes(origin, destination),
+      ]);
+
+      if (isCancelled) {
+        return;
+      }
+
+      if (routeResult.status === 'fulfilled') {
+        const routeResponse = routeResult.value;
+
+        if (routeResponse.quickestDuration !== null) {
+          setBusDuration(formatDuration(routeResponse.quickestDuration));
+        }
+
+        if (routeResponse.drivingDuration !== null) {
+          setRideDuration(formatDuration(routeResponse.drivingDuration));
+        }
+      }
+
+      if (rideResult.status === 'fulfilled') {
+        const rideResponse = rideResult.value;
+
+        if (rideResponse.quotes.length > 0) {
+          setRideHailingOptions(rideResponse.quotes);
+        }
+      }
+
+      if (!isCancelled) {
+        setIsLoading(false);
+      }
+    }
+
+    void loadJourneyData();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [destination, origin]);
+
+  const visibleRideOptions = useMemo(() => rideHailingOptions, [rideHailingOptions]);
+
   return (
     <div className="page">
       <PageTopBar showBack />
-      <SearchPanel from="Jurong East" to="SMU" />
+      <SearchPanel from={origin} to={destination} recentSearches={recentSearches} />
 
-      <div className="transport-toggle">
-        <button className="text-chip">🚌 52 min</button>
-        <button className="text-chip text-chip--active">🚕 31 min</button>
-        <button className="text-chip">Calculate Fares</button>
-      </div>
+      <RouteModeTabs
+        active="ride-hailing"
+        origin={origin}
+        destination={destination}
+        busDuration={busDuration}
+        rideDuration={rideDuration}
+      />
 
       <div className="stack-md">
-        {rideHailingOptions.map((ride) => (
-          <div key={ride.id} className="ride-card">
+        {isLoading ? <div className="empty-state">Loading ride options...</div> : null}
+
+        {!isLoading && visibleRideOptions.length === 0 ? (
+          <div className="empty-state">No ride options found.</div>
+        ) : null}
+
+        {visibleRideOptions.map((ride) => (
+          <div key={ride.provider} className="ride-card">
             <div className="ride-card__logo">{ride.provider[0]}</div>
             <div className="ride-card__info">
               <div className="ride-card__name">{ride.provider}</div>
-              <div className="muted-caption">{ride.eta}</div>
+              <div className="muted-caption">{ride.eta} mins away</div>
             </div>
             <div className="ride-card__price">
               <div className="muted-caption">From</div>

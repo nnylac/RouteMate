@@ -1,16 +1,49 @@
+import { WalkingIcon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
+import type { RouteBadge } from '@/types';
+
 interface TransitBadgeProps {
-  label: string;
+  badge: RouteBadge;
 }
 
-const greenLines = new Set(['EW', '190', '867', '53', '123']);
-const brownLines = new Set(['TE']);
+const lineToneMap: Record<string, string> = {
+  EW: 'green',
+  NS: 'red',
+  NE: 'purple',
+  CC: 'yellow',
+  CE: 'yellow',
+  DT: 'blue',
+  TE: 'brown',
+  CG: 'green',
+  BP: 'grey',
+  SE: 'grey',
+  SW: 'grey',
+  PE: 'grey',
+  PW: 'grey',
+  SK: 'grey',
+  PTC: 'grey',
+};
 
-export function TransitBadge({ label }: TransitBadgeProps) {
-  const tone = greenLines.has(label)
-    ? 'green'
-    : brownLines.has(label)
-      ? 'brown'
-      : 'neutral';
+function getMrtCode(value: string) {
+  return value.trim().slice(0, 2).toUpperCase();
+}
 
-  return <span className={`transit-badge transit-badge--${tone}`}>{label}</span>;
+export function TransitBadge({ badge }: TransitBadgeProps) {
+  if (badge.kind === 'walk') {
+    return (
+      <span className="transit-badge transit-badge--walk">
+        <HugeiconsIcon icon={WalkingIcon} size={15} strokeWidth={1.8} />
+        <span>{badge.value}</span>
+      </span>
+    );
+  }
+
+  if (badge.kind === 'bus') {
+    return <span className="transit-badge transit-badge--green">{badge.value}</span>;
+  }
+
+  const mrtCode = getMrtCode(badge.value);
+  const tone = lineToneMap[mrtCode] ?? 'neutral';
+
+  return <span className={`transit-badge transit-badge--${tone}`}>{mrtCode}</span>;
 }
