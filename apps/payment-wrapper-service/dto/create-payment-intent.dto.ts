@@ -1,10 +1,4 @@
-import {
-  IsNumber,
-  IsOptional,
-  IsObject,
-  IsString,
-  Min,
-} from 'class-validator';
+import { IsNumber, IsOptional, IsObject, IsString, Min } from 'class-validator';
 
 export class CreatePaymentIntentDto {
   @IsNumber()
