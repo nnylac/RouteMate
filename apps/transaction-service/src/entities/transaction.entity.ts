@@ -31,6 +31,7 @@ export class Transaction {
     type: 'varchar',
     length: 100,
     name: 'card_id',
+    nullable: true,
   })
   cardId: string | null;
 
@@ -61,8 +62,27 @@ export class Transaction {
     length: 100,
     name: 'reference',
     unique: true,
+    nullable: true,
   })
-  reference: string;
+  reference: string | null;
+
+  // Stripe PaymentIntent ID — set when a payment intent is created
+  @Column({
+    type: 'varchar',
+    length: 255,
+    name: 'payment_reference',
+    unique: true,
+    nullable: true,
+  })
+  paymentReference: string | null;
+
+  // Populated when status = failed
+  @Column({
+    type: 'text',
+    name: 'failure_reason',
+    nullable: true,
+  })
+  failureReason: string | null;
 
   @CreateDateColumn({
     type: 'timestamp',
