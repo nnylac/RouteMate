@@ -1,23 +1,16 @@
-import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Injectable,
+} from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
 
 type TransactionType = 'top_up' | 'payment' | 'refund';
-
-interface CardServiceCard {
-  _id?: string;
-  id?: string;
-  userId?: string;
-  user_id?: string;
-  balance?: number;
-}
 
 @Injectable()
 export class CardOrchestratorServiceService {
   private readonly cardServiceBaseUrl =
     process.env.CARD_SERVICE_URL ?? 'http://localhost:3002/card-service';
-  private readonly transactionApiCreateUrl =
-    process.env.TRANSACTION_API_CREATE_URL ??
-    'https://personal-1pnhiqon.outsystemscloud.com/Payment/rest/TransactionAPI/CreateTransaction';
 
   getHello(): string {
     return 'Hello World!';
@@ -54,8 +47,6 @@ export class CardOrchestratorServiceService {
       { amount },
     );
 
-    await this.recordTransaction(updatedCard, amount, 'top_up');
-
     return updatedCard;
   }
 
@@ -64,46 +55,11 @@ export class CardOrchestratorServiceService {
       throw new BadRequestException('amount must be greater than 0');
     }
 
-    const updatedCard = await this.forwardRequest(
+    return this.forwardRequest(
       'patch',
       `/cards/${id}/deduct`,
       { amount },
     );
-
-    await this.recordTransaction(updatedCard, amount, 'payment');
-
-    return updatedCard;
-  }
-
-  private async recordTransaction(
-    cardResponse: CardServiceCard,
-    amount: number,
-    transactionType: TransactionType,
-  ) {
-    const cardId = cardResponse?._id ?? cardResponse?.id;
-    const userId = cardResponse?.userId ?? cardResponse?.user_id;
-
-    if (!cardId || !userId) {
-      return;
-    }
-
-    const payload = {
-      userId,
-      cardId,
-      transactionType,
-      amount: amount.toFixed(2),
-      status: 'success',
-      reference: `${transactionType}_${cardId}_${Date.now()}`,
-    };
-
-    try {
-      await axios.post(this.transactionApiCreateUrl, payload);
-    } catch (error) {
-      console.warn(
-        'Transaction API call failed:',
-        error instanceof AxiosError ? error.response?.data ?? error.message : error,
-      );
-    }
   }
 
   private async forwardRequest(
