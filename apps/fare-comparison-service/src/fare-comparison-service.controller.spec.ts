@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { HttpModule } from '@nestjs/axios';
 import { FareComparisonServiceController } from './fare-comparison-service.controller';
 import { FareComparisonServiceService } from './fare-comparison-service.service';
 
@@ -7,16 +8,21 @@ describe('FareComparisonServiceController', () => {
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
+      imports: [HttpModule],
       controllers: [FareComparisonServiceController],
       providers: [FareComparisonServiceService],
     }).compile();
 
-    fareComparisonServiceController = app.get<FareComparisonServiceController>(FareComparisonServiceController);
+    fareComparisonServiceController =
+      app.get<FareComparisonServiceController>(FareComparisonServiceController);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(fareComparisonServiceController.getHello()).toBe('Hello World!');
+  describe('health', () => {
+    it('should return service health status', () => {
+      expect(fareComparisonServiceController.health()).toEqual({
+        status: 'ok',
+        service: 'fare-comparison-service',
+      });
     });
   });
 });
