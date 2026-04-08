@@ -33,4 +33,10 @@ export class CreateTransactionDto {
   @IsString()
   @Length(1, 100)
   reference?: string;
+
+  // Stripe PaymentIntent ID — supplied by card-orchestrator after intent creation
+  @IsOptional()
+  @IsString()
+  @Length(1, 255)
+  paymentReference?: string;
 }
