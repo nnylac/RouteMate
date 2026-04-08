@@ -1,9 +1,9 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
-import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
-import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
-import { CreateRefundDto } from './dto/create-refund.dto';
+import { CreatePaymentIntentDto } from '../dto/create-payment-intent.dto';
+import { ConfirmPaymentDto } from '../dto/confirm-payment.dto';
+import { CreateRefundDto } from '../dto/create-refund.dto';
 
 @Injectable()
 export class PaymentWrapperServiceService {
@@ -93,8 +93,7 @@ export class PaymentWrapperServiceService {
   // ─── Retrieve PaymentIntent ─────────────────────────────────────────────────
 
   async getPaymentIntent(paymentIntentId: string) {
-    const intent =
-      await this.stripe.paymentIntents.retrieve(paymentIntentId);
+    const intent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
 
     return {
       paymentIntentId: intent.id,

@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { PaymentWrapperServiceService } from './payment-wrapper-service.service';
-import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
-import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
-import { CreateRefundDto } from './dto/create-refund.dto';
+import { CreatePaymentIntentDto } from '../dto/create-payment-intent.dto';
+import { ConfirmPaymentDto } from '../dto/confirm-payment.dto';
+import { CreateRefundDto } from '../dto/create-refund.dto';
 
 @Controller('payment')
 export class PaymentWrapperServiceController {
