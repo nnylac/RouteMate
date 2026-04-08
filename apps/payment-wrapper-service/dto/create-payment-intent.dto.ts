@@ -3,7 +3,7 @@ import { IsNumber, IsOptional, IsObject, IsString, Min } from 'class-validator';
 export class CreatePaymentIntentDto {
   @IsNumber()
   @Min(0.01)
-  amount: number;
+  amount!: number;
 
   @IsOptional()
   @IsString()

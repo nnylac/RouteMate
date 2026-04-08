@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { TextInput } from '@/components/common/TextInput';
+import { writeStoredUser } from '@/lib/authStorage';
 import { getUserById, loginUser } from '@/lib/userApi';
 
 interface LoginLocationState {
@@ -44,7 +45,7 @@ export function LoginPage() {
       });
 
       const user = await getUserById(response.user.id);
-      localStorage.setItem('routemate-user', JSON.stringify(user));
+      writeStoredUser(user);
       navigate('/home');
     } catch {
       setErrorMessage('Username or Password enetered is incorrect. Try Again.');

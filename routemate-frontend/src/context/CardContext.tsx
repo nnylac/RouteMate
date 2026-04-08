@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { readStoredUser } from '@/lib/authStorage';
 import { createCard as createCardRequest, deductFareRequest, getCardsByUser, topUpCardRequest } from '@/lib/cardApi';
-import type { User } from '@/lib/userApi';
 import type { CardInfo, CardType } from '@/types';
 
 interface CardContextValue {
@@ -25,17 +25,15 @@ export function CardProvider({ children }: { children: ReactNode }) {
   const [latestTopUpAmount, setLatestTopUpAmount] = useState<number | null>(null);
 
   const refreshCards = useCallback(async () => {
-    const storedUser = localStorage.getItem('routemate-user');
+    const user = readStoredUser();
 
-    if (!storedUser) {
+    if (!user) {
       setCards([]);
       setErrorMessage('');
       return;
     }
 
     try {
-      const user = JSON.parse(storedUser) as User;
-
       if (!user.id) {
         setCards([]);
         return;
@@ -59,13 +57,12 @@ export function CardProvider({ children }: { children: ReactNode }) {
   }, [location.pathname, refreshCards]);
 
   async function createCard(cardType: CardType) {
-    const storedUser = localStorage.getItem('routemate-user');
+    const user = readStoredUser();
 
-    if (!storedUser) {
+    if (!user) {
       throw new Error('No signed-in user found. Please log in again.');
     }
 
-    const user = JSON.parse(storedUser) as User;
     const createdCard = await createCardRequest({
       userId: user.id,
       cardType,

@@ -33,7 +33,10 @@ type RouteStep = {
 
 type GoogleMapsErrorResponse = {
   response?: {
-    data?: unknown;
+    data?: {
+      status?: string;
+      [key: string]: unknown;
+    };
   };
 };
 
@@ -43,6 +46,57 @@ export class MapsWrapperService {
 
   constructor(private configService: ConfigService) {
     this.client = new Client({});
+  }
+
+  private normalizePlaceQuery(place: string) {
+    const trimmedPlace = place.trim();
+
+    if (!trimmedPlace) {
+      return trimmedPlace;
+    }
+
+    if (/singapore/i.test(trimmedPlace)) {
+      return trimmedPlace;
+    }
+
+    return `${trimmedPlace}, Singapore`;
+  }
+
+  private async getDirectionsWithFallback(
+    apiKey: string,
+    origin: string,
+    destination: string,
+    mode: TravelMode,
+    alternatives: boolean,
+  ) {
+    try {
+      return await this.client.directions({
+        params: {
+          origin,
+          destination,
+          mode,
+          alternatives,
+          key: apiKey,
+        },
+      });
+    } catch (error: unknown) {
+      const errorWithResponse = error as GoogleMapsErrorResponse;
+      const googleStatus = errorWithResponse.response?.data?.status;
+
+      if (googleStatus !== 'NOT_FOUND') {
+        throw error;
+      }
+
+      return this.client.directions({
+        params: {
+          origin: this.normalizePlaceQuery(origin),
+          destination: this.normalizePlaceQuery(destination),
+          mode,
+          alternatives,
+          key: apiKey,
+        },
+      });
+    }
   }
 
   async getRoutes(origin: string, destination: string) {
@@ -57,15 +111,13 @@ export class MapsWrapperService {
     }
 
     try {
-      const response = await this.client.directions({
-        params: {
-          origin,
-          destination,
-          mode: TravelMode.transit,
-          alternatives: true,
-          key: apiKey,
-        },
-      });
+      const response = await this.getDirectionsWithFallback(
+        apiKey,
+        origin,
+        destination,
+        TravelMode.transit,
+        true,
+      );
 
       const routes = response.data.routes;
 
@@ -117,15 +169,13 @@ export class MapsWrapperService {
         };
       });
 
-      const drivingResponse = await this.client.directions({
-        params: {
-          origin,
-          destination,
-          mode: TravelMode.driving,
-          alternatives: false,
-          key: apiKey,
-        },
-      });
+      const drivingResponse = await this.getDirectionsWithFallback(
+        apiKey,
+        origin,
+        destination,
+        TravelMode.driving,
+        false,
+      );
       const drivingRoute = drivingResponse.data.routes[0];
       const drivingLeg = drivingRoute?.legs?.[0];
 

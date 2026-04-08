@@ -6,6 +6,16 @@ import stripeLogo from '@/assets/payment-logos/stripe.svg';
 import { PageTopBar } from '@/components/common/PageTopBar';
 import { TopUpCardPreview } from '@/components/common/TopUpCardPreview';
 import { useCards } from '@/context/CardContext';
+import { readStoredUser } from '@/lib/authStorage';
+import {
+  createTransactionRequest,
+  updateTransactionStatusRequest,
+} from '@/lib/cardApi';
+import {
+  confirmPaymentIntent,
+  createPaymentIntent,
+} from '@/lib/paymentApi';
+import { saveTransactionMetadata } from '@/lib/transactionHistoryStorage';
 
 const amounts = [10, 20, 30, 50, 100];
 
@@ -74,12 +84,95 @@ export function TopUpPageConnected() {
     }
 
     setIsSubmitting(true);
+    let transactionId: number | null = null;
+    let paymentSucceeded = false;
+    let transactionSyncWarning = false;
 
     try {
+      const storedUser = readStoredUser();
+
+      if (!storedUser) {
+        throw new Error('No signed-in user found. Please log in again.');
+      }
+
+      if (!storedUser.transactionUserId) {
+        throw new Error('No signed-in user ID found for this account. Please log in again.');
+      }
+
+      const userId = storedUser.transactionUserId;
+
+      try {
+        const transaction = await createTransactionRequest({
+          userId,
+          cardId: currentCard.id,
+          amount: parsedAmount,
+          transactionType: 'top_up',
+          status: 'pending',
+        });
+
+        if (transaction.Id && transaction.Id > 0) {
+          transactionId = transaction.Id;
+          saveTransactionMetadata({
+            transactionId: transaction.Id,
+            cardId: currentCard.id,
+            category: 'Top Up',
+            title: 'Top Up',
+            route: 'Card top up',
+          });
+        } else {
+          transactionSyncWarning = true;
+        }
+      } catch {
+        transactionSyncWarning = true;
+      }
+
+      const paymentIntent = await createPaymentIntent({
+        amount: parsedAmount,
+        currency: 'sgd',
+        metadata: {
+          userId: String(userId),
+          cardId: currentCard.id,
+          transactionId: transactionId !== null ? String(transactionId) : 'pending-sync',
+        },
+      });
+
+      const confirmation = await confirmPaymentIntent({
+        paymentIntentId: paymentIntent.paymentIntentId,
+        paymentMethod: 'pm_card_visa',
+      });
+
+      if (confirmation.status !== 'succeeded') {
+        throw new Error(`Payment failed with status: ${confirmation.status}`);
+      }
+      paymentSucceeded = true;
       await topUpCard(currentCard.id, parsedAmount);
-      navigate('/top-up-success', { state: { cardId: currentCard.id } });
+
+      if (transactionId !== null) {
+        await updateTransactionStatusRequest(transactionId, {
+          status: 'success',
+        });
+      }
+
+      navigate('/top-up-success', {
+        state: {
+          cardId: currentCard.id,
+          transactionWarning: transactionSyncWarning
+            ? 'Top-up succeeded, but transaction status could not be synced.'
+            : undefined,
+        },
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to top up card.';
+      if (transactionId !== null) {
+        try {
+          await updateTransactionStatusRequest(transactionId, {
+            status: paymentSucceeded ? 'rolled_back' : 'failed',
+            failureReason: message,
+          });
+        } catch {
+          // Keep the original top-up error visible if transaction patch fails.
+        }
+      }
       setAmountError(message);
     } finally {
       setIsSubmitting(false);

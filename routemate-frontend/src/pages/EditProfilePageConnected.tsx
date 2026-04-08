@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageTopBar } from '@/components/common/PageTopBar';
 import { TextInput } from '@/components/common/TextInput';
+import { clearStoredUser, readStoredUser, writeStoredUser } from '@/lib/authStorage';
 import { changePassword, updateUser, type User } from '@/lib/userApi';
 
 export function EditProfilePageConnected() {
@@ -16,22 +17,16 @@ export function EditProfilePageConnected() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('routemate-user');
+    const storedUser = readStoredUser();
 
     if (!storedUser) {
       setErrorMessage('No signed-in user found. Please log in again.');
       return;
     }
 
-    try {
-      const parsedUser = JSON.parse(storedUser) as User;
-      setUser(parsedUser);
-      setFullName(parsedUser.fullName ?? '');
-      setEmail(parsedUser.email ?? '');
-    } catch {
-      localStorage.removeItem('routemate-user');
-      setErrorMessage('Unable to load your profile. Please log in again.');
-    }
+    setUser(storedUser);
+    setFullName(storedUser.fullName ?? '');
+    setEmail(storedUser.email ?? '');
   }, []);
 
   async function handleSave() {
@@ -77,13 +72,16 @@ export function EditProfilePageConnected() {
         });
       }
 
-      localStorage.setItem('routemate-user', JSON.stringify(nextUser));
+      writeStoredUser(nextUser);
       setUser(nextUser);
       setCurrentPassword('');
       setNewPassword('');
       setSuccessMessage('Profile updated successfully.');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to update profile.';
+      if (message === 'No signed-in user found. Please log in again.') {
+        clearStoredUser();
+      }
       setErrorMessage(message);
     } finally {
       setIsSubmitting(false);

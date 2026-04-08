@@ -8,14 +8,20 @@ import {
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PageTopBar } from '@/components/common/PageTopBar';
 import { SearchPanel } from '@/components/common/SearchPanel';
 import { TransitBadge } from '@/components/common/TransitBadge';
 import { useCards } from '@/context/CardContext';
 import { recentSearches } from '@/data/mockData';
 import { useBookmarkedRoutes } from '@/hooks/useBookmarkedRoutes';
+import { readStoredUser } from '@/lib/authStorage';
+import {
+  createTransactionRequest,
+  updateTransactionStatusRequest,
+} from '@/lib/cardApi';
 import { searchRoutes } from '@/lib/journeyApi';
+import { saveTransactionMetadata } from '@/lib/transactionHistoryStorage';
 import type { DetailedRouteOption, RouteBadge, RouteSegmentDetail } from '@/types';
 
 interface SegmentCardData {
@@ -47,6 +53,26 @@ function formatDurationSummary(minutes: number) {
   }
 
   return `${minutes} min`;
+}
+
+function getTransactionCategory(option: DetailedRouteOption) {
+  return option.isPublicTransport ? 'Public Transport' : 'Ride-Hailing';
+}
+
+function getTransactionTitle(option: DetailedRouteOption) {
+  if (!option.isPublicTransport) {
+    return option.summary || 'Ride-Hailing';
+  }
+
+  const modes = option.segments
+    .map((segment) => {
+      if (segment.mode === 'MRT') return 'MRT';
+      if (segment.mode === 'BUS') return 'Bus';
+      return null;
+    })
+    .filter((value, index, array): value is string => value !== null && array.indexOf(value) === index);
+
+  return modes.join(' · ') || 'Public Transport';
 }
 
 function formatClockTime(totalMinutes: number) {
@@ -238,6 +264,7 @@ function SegmentCard({
 }
 
 export function RouteDetailsPageCurrent() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { cards, deductFare } = useCards();
   const origin = searchParams.get('origin') ?? 'Jurong East';
@@ -324,12 +351,68 @@ export function RouteDetailsPageCurrent() {
       return;
     }
 
+    const storedUser = readStoredUser();
+
+    if (!storedUser) {
+      setJourneyError('No signed-in user found. Please log in again.');
+      return;
+    }
+
+    let transactionId: number | null = null;
+
     try {
       setIsCompletingJourney(true);
       setJourneyError('');
+      const transaction = await createTransactionRequest({
+        userId: storedUser.id,
+        cardId: currentCard.id,
+        amount: selectedRoute.fare,
+        transactionType: 'payment',
+        status: 'pending',
+        reference: `journey_${currentCard.id}_${selectedRoute.id}_${Date.now()}`,
+      });
+
+      if (!transaction.Id || transaction.Id <= 0) {
+        throw new Error('Unable to create journey transaction.');
+      }
+
+      transactionId = transaction.Id;
+      saveTransactionMetadata({
+        transactionId: transaction.Id,
+        cardId: currentCard.id,
+        category: getTransactionCategory(selectedRoute),
+        title: getTransactionTitle(selectedRoute),
+        route: `${origin} → ${destination}`,
+        routeBreakdown: selectedRoute,
+      });
       await deductFare(currentCard.id, selectedRoute.fare);
+
+      await updateTransactionStatusRequest(transactionId, {
+        status: 'success',
+      });
+
+      navigate('/journey-complete', {
+        state: {
+          cardId: currentCard.id,
+          fareAmount: selectedRoute.fare,
+        },
+      });
     } catch (error) {
-      setJourneyError(error instanceof Error ? error.message : 'Unable to complete journey.');
+      const message =
+        error instanceof Error ? error.message : 'Unable to complete journey.';
+
+      if (transactionId !== null) {
+        try {
+          await updateTransactionStatusRequest(transactionId, {
+            status: 'failed',
+            failureReason: message,
+          });
+        } catch {
+          // Preserve the original deduction error if transaction update fails.
+        }
+      }
+
+      setJourneyError(message);
     } finally {
       setIsCompletingJourney(false);
     }

@@ -11,7 +11,16 @@ export function RouteCard({ route }: RouteCardProps) {
   const navigate = useNavigate();
 
   return (
-    <button className="route-card" onClick={() => navigate('/route-details')}>
+    <button
+      className="route-card"
+      onClick={() =>
+        navigate(
+          route.optionId
+            ? `/route-details?origin=${encodeURIComponent(route.from)}&destination=${encodeURIComponent(route.to)}&optionId=${encodeURIComponent(route.optionId)}${route.routeId ? `&routeId=${encodeURIComponent(route.routeId)}` : ''}`
+            : '/route-details',
+        )
+      }
+    >
       <div className="route-card__top">
         <span className="route-card__mode">{route.modeSummary}</span>
         <span className="route-card__arrow" aria-hidden="true">

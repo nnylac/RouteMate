@@ -193,7 +193,7 @@ a {
   max-width: none;
 }
 
-.stack-sm { gap: 10px; }
+.stack-sm { gap: 15px; }
 .stack-md { gap: 16px; }
 .stack-lg { gap: 18px; }
 
@@ -1359,13 +1359,62 @@ a {
 .transaction-card {
   padding: 12px 14px;
   background: var(--soft-blue);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .transaction-card__top {
   display: flex;
   justify-content: space-between;
   font-size: 0.8rem;
-  margin-bottom: 6px;
+}
+
+.transaction-card__actions {
+  display: flex;
+  justify-content: center;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.transaction-card__view-more {
+  text-align: center;
+}
+
+.transaction-card__view-more:disabled {
+  opacity: 0.5;
+}
+
+.transaction-card__breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 10px 12px 0;
+  border-top: 1px solid #d7d7d7;
+  background: rgba(215, 215, 215, 0.12);
+  border-radius: 10px;
+}
+
+.transaction-card__breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  color: #202020;
+  font-size: 0.88rem;
+}
+
+.transaction-card__breakdown-route {
+  flex: 1;
+}
+
+.transaction-card__breakdown-amount {
+  white-space: nowrap;
+}
+
+.card-details__transactions {
+  margin-top: 5px;
 }
 
 .top-up-section {

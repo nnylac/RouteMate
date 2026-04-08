@@ -34,4 +34,47 @@ export class CardOrchestratorServiceController {
   async deductFare(@Param('id') id: string, @Body() body: { amount: number }) {
     return this.cardOrchestratorServiceService.deductFare(id, body.amount);
   }
+
+  @Post('transactions')
+  async createTransaction(
+    @Body()
+    body: {
+      userId: string | number;
+      cardId: string;
+      amount: number;
+      transactionType: 'top_up' | 'payment' | 'refund';
+      status: 'pending' | 'success' | 'failed' | 'rolled_back';
+      reference?: string;
+      paymentReference?: string;
+      failureReason?: string;
+    },
+  ) {
+    return this.cardOrchestratorServiceService.createTransaction(body);
+  }
+
+  @Patch('transactions/:transactionId/status')
+  async updateTransactionStatus(
+    @Param('transactionId') transactionId: string,
+    @Body()
+    body: {
+      status: 'pending' | 'success' | 'failed' | 'rolled_back';
+      failureReason?: string;
+    },
+  ) {
+    return this.cardOrchestratorServiceService.updateTransactionStatus(
+      Number(transactionId),
+      body,
+    );
+  }
+
+  @Get('transactions/:userId/:cardId')
+  async getTransactionsRecords(
+    @Param('userId') userId: string,
+    @Param('cardId') cardId: string,
+  ) {
+    return this.cardOrchestratorServiceService.getTransactionsRecords(
+      userId,
+      cardId,
+    );
+  }
 }

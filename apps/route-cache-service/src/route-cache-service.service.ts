@@ -41,7 +41,7 @@ export class RouteCacheService {
       { route_id: body.route_id },
       body,
       {
-        new: true,
+        returnDocument: 'after',
         upsert: true,
         runValidators: true,
       },

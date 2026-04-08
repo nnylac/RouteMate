@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageTopBar } from '@/components/common/PageTopBar';
+import { clearStoredUser, readStoredUser } from '@/lib/authStorage';
 import type { User } from '@/lib/userApi';
 
 export function ProfilePageConnected() {
@@ -8,17 +9,7 @@ export function ProfilePageConnected() {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('routemate-user');
-
-    if (!storedUser) {
-      return;
-    }
-
-    try {
-      setUser(JSON.parse(storedUser) as User);
-    } catch {
-      localStorage.removeItem('routemate-user');
-    }
+    setUser(readStoredUser());
   }, []);
 
   return (
@@ -51,7 +42,7 @@ export function ProfilePageConnected() {
       <button
         className="logout-button"
         onClick={() => {
-          localStorage.removeItem('routemate-user');
+          clearStoredUser();
           navigate('/');
         }}
       >

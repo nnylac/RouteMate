@@ -6,6 +6,8 @@ export interface User {
   email: string;
   username: string;
   isActive: boolean;
+  transactionUserId?: number;
+  outsystemsUserId?: number;
   createdAt?: string;
   updatedAt?: string;
 }

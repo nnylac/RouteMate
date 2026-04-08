@@ -8,7 +8,7 @@ import { SearchPanel } from '@/components/common/SearchPanel';
 import { TransitBadge } from '@/components/common/TransitBadge';
 import { recentSearches } from '@/data/mockData';
 import { useBookmarkedRoutes } from '@/hooks/useBookmarkedRoutes';
-import { searchRoutes } from '@/lib/journeyApi';
+import { searchRoutes, selectRoute } from '@/lib/journeyApi';
 import type { DetailedRouteOption } from '@/types';
 
 function renderDurationParts(durationLabel: string) {
@@ -51,6 +51,7 @@ export function RouteResultsPage() {
   const origin = searchParams.get('origin') ?? 'Jurong East';
   const destination = searchParams.get('destination') ?? 'SMU';
   const [routeOptions, setRouteOptions] = useState<DetailedRouteOption[]>([]);
+  const [routeId, setRouteId] = useState<number | null>(null);
   const [busDuration, setBusDuration] = useState<string | null>(null);
   const [rideDuration, setRideDuration] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -63,6 +64,7 @@ export function RouteResultsPage() {
       if (!isCancelled) {
         setIsLoading(true);
         setRouteOptions([]);
+        setRouteId(null);
         setBusDuration(null);
         setRideDuration(null);
       }
@@ -77,6 +79,7 @@ export function RouteResultsPage() {
 
       if (routeResult.status === 'fulfilled') {
         const routeResponse = routeResult.value;
+        setRouteId(routeResponse.route_id);
 
         if (routeResponse.routeOptions.length > 0) {
           setRouteOptions(routeResponse.routeOptions);
@@ -128,6 +131,7 @@ export function RouteResultsPage() {
         {visibleRouteOptions.map((option) => {
           const routeKey = `${origin}::${destination}::${option.id}`;
           const bookmarked = isBookmarked(routeKey);
+          const targetPath = `/route-details?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&optionId=${encodeURIComponent(option.id)}${routeId !== null ? `&routeId=${encodeURIComponent(String(routeId))}` : ''}`;
 
           return (
             <div
@@ -135,17 +139,27 @@ export function RouteResultsPage() {
               className="route-option"
               role="button"
               tabIndex={0}
-              onClick={() =>
-                navigate(
-                  `/route-details?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&optionId=${encodeURIComponent(option.id)}`,
-                )
-              }
+              onClick={() => {
+                const proceed = async () => {
+                  if (routeId !== null) {
+                    await selectRoute(routeId, option.id);
+                  }
+                  navigate(targetPath);
+                };
+
+                void proceed();
+              }}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
-                  navigate(
-                    `/route-details?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&optionId=${encodeURIComponent(option.id)}`,
-                  );
+                  const proceed = async () => {
+                    if (routeId !== null) {
+                      await selectRoute(routeId, option.id);
+                    }
+                    navigate(targetPath);
+                  };
+
+                  void proceed();
                 }
               }}
             >

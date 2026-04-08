@@ -8,6 +8,7 @@ import { CardsPage } from '@/pages/CardsPage';
 import { RouteResultsPage } from '@/pages/RouteResultsPage';
 import { RouteDetailsPageCurrent } from '@/pages/RouteDetailsPageCurrent';
 import { JourneyProgressPage } from '@/pages/JourneyProgressPage';
+import { JourneyCompleteSuccessPage } from '@/pages/JourneyCompleteSuccessPage';
 import { CardDetailsPage } from '@/pages/CardDetailsPage';
 import { TopUpPageConnected } from '@/pages/TopUpPageConnected';
 import { TopUpSuccessPage } from '@/pages/TopUpSuccessPage';
@@ -31,6 +32,7 @@ export function AppRouter() {
         <Route path="/routes" element={<RouteResultsPage />} />
         <Route path="/route-details" element={<RouteDetailsPageCurrent />} />
         <Route path="/journey" element={<JourneyProgressPage />} />
+        <Route path="/journey-complete" element={<JourneyCompleteSuccessPage />} />
         <Route path="/card-details" element={<CardDetailsPage />} />
         <Route path="/top-up" element={<TopUpPageConnected />} />
         <Route path="/top-up-success" element={<TopUpSuccessPage />} />

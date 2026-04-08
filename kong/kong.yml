@@ -92,11 +92,11 @@ services:
         strip_path: false
       - name: route-cache-select-option
         paths: [/route-cache/select-option]
-        methods: [PATCH]
+        methods: [PATCH, OPTIONS]
         strip_path: false
       - name: route-cache-user-history
         paths: [/route-cache/user-history]
-        methods: [GET]
+        methods: [GET, OPTIONS]
         strip_path: false
       - name: route-cache-disrupt
         paths: [/route-cache/disrupt]
@@ -220,7 +220,7 @@ services:
         strip_path: false
       - name: route-planner-select
         paths: [/route-planner/select]
-        methods: [PATCH]
+        methods: [PATCH, OPTIONS]
         strip_path: false
       - name: route-planner-routes
         paths: [/route-planner/routes]
@@ -362,7 +362,7 @@ services:
     routes:
       - name: payment-wrapper
         paths: [/payment]
-        methods: [GET, POST]
+        methods: [GET, POST, OPTIONS]
         strip_path: false
     plugins:
       - name: rate-limiting

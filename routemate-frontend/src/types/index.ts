@@ -9,6 +9,8 @@ export interface SavedRoute {
   distanceKm: number;
   durationLabel: string;
   fare: number;
+  routeId?: string;
+  optionId?: string;
 }
 
 export interface CardInfo {
@@ -39,6 +41,36 @@ export interface RouteSegmentDetail {
   arrivalTiming?: string | null;
 }
 
+export interface RouteFareByCategory {
+  incremental: number;
+  cumulative: number;
+}
+
+export interface RouteFareSegmentDetail {
+  segmentId: number;
+  segmentOrder: number;
+  mode: 'BUS' | 'MRT';
+  lineOrService: string | null;
+  distanceKm: number;
+  cumulativeDistanceKm: number;
+  fareBasisMode: string | null;
+  fares: {
+    adultCard: RouteFareByCategory;
+    studentCard: RouteFareByCategory;
+    seniorCard: RouteFareByCategory;
+  };
+}
+
+export interface RouteFareBreakdown {
+  fareBasisMode: string | null;
+  totals: {
+    adultCard: number;
+    studentCard: number;
+    seniorCard: number;
+  };
+  segments: RouteFareSegmentDetail[];
+}
+
 export interface DetailedRouteOption extends RouteOption {
   summary?: string;
   totalDurationMins: number;
@@ -46,6 +78,7 @@ export interface DetailedRouteOption extends RouteOption {
   transferCount: number;
   isPublicTransport: boolean;
   segments: RouteSegmentDetail[];
+  fares?: RouteFareBreakdown | null;
 }
 
 export interface RouteBadge {

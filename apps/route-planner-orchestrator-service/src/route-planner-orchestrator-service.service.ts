@@ -292,7 +292,7 @@ export class RoutePlannerOrchestratorServiceService {
         }),
       );
 
-      const route_id = Date.now();
+      const route_id = Date.now() * 1000 + Math.floor(Math.random() * 1000);
 
       const routeOptionsForCache = enrichedOptions.map(
         ({ segments_for_cache, segments, ...rest }) => ({
