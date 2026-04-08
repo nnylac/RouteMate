@@ -3,7 +3,8 @@ import { RideHailingAggregatorServiceController } from './ride-hailing-aggregato
 import { RideHailingAggregatorServiceService } from './ride-hailing-aggregator-service.service';
 
 describe('RideHailingAggregatorServiceController', () => {
-  let rideHailingAggregatorServiceController: RideHailingAggregatorServiceController;
+  // Use a shorter name for the instance variable
+  let controller: RideHailingAggregatorServiceController;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
@@ -11,12 +12,13 @@ describe('RideHailingAggregatorServiceController', () => {
       providers: [RideHailingAggregatorServiceService],
     }).compile();
 
-    rideHailingAggregatorServiceController = app.get<RideHailingAggregatorServiceController>(RideHailingAggregatorServiceController);
+    // Assign the instance to the shorter variable name
+    controller = app.get<RideHailingAggregatorServiceController>(
+      RideHailingAggregatorServiceController,
+    );
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(rideHailingAggregatorServiceController.getHello()).toBe('Hello World!');
-    });
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
   });
 });

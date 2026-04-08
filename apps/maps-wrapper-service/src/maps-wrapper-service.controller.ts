@@ -1,12 +1,17 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { MapsWrapperServiceService } from './maps-wrapper-service.service';
 
-@Controller()
+@Controller('maps')
 export class MapsWrapperServiceController {
-  constructor(private readonly mapsWrapperServiceService: MapsWrapperServiceService) {}
+  constructor(
+    private readonly mapsWrapperServiceService: MapsWrapperServiceService,
+  ) {}
 
-  @Get()
-  getHello(): string {
-    return this.mapsWrapperServiceService.getHello();
+  @Get('routes')
+  async getRoutes(
+    @Query('origin') origin: string,
+    @Query('destination') destination: string,
+  ) {
+    return this.mapsWrapperServiceService.getRoutes(origin, destination);
   }
 }

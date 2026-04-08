@@ -1,12 +1,19 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ArrivalTimingServiceService } from './arrival-timing-service.service';
 
-@Controller()
+@Controller('arrival-timing')
 export class ArrivalTimingServiceController {
-  constructor(private readonly arrivalTimingServiceService: ArrivalTimingServiceService) {}
+  constructor(
+    private readonly arrivalTimingServiceService: ArrivalTimingServiceService,
+  ) {}
 
   @Get()
   getHello(): string {
-    return this.arrivalTimingServiceService.getHello();
+    return 'arrival timing service is running';
+  }
+
+  @Get()
+  getArrivalTiming(@Query('line') line: string, @Query('stop') stop: string) {
+    return this.arrivalTimingServiceService.getArrivalTiming(line, stop);
   }
 }

@@ -3,7 +3,7 @@ import { NotificationServiceController } from './notification-service.controller
 import { NotificationService } from './notification-service.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-// eslint-disable-next-line prettier/prettier
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Notification, NotificationSchema } from '../schemas/notification-service-schema';
 
 @Module({
@@ -21,6 +21,17 @@ import { Notification, NotificationSchema } from '../schemas/notification-servic
     }),
     MongooseModule.forFeature([
       { name: Notification.name, schema: NotificationSchema },
+    ]),
+    ClientsModule.register([
+      {
+        name: 'RABBITMQ_CLIENT',
+        transport: Transport.RMQ,
+        options: {
+          urls: ['amqp://guest:guest@localhost:5672'],
+          queue: 'route_events',
+          queueOptions: { durable: true },
+        },
+      },
     ]),
   ],
   controllers: [NotificationServiceController],

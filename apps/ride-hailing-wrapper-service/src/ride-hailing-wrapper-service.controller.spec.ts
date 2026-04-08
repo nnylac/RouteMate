@@ -3,20 +3,20 @@ import { RideHailingWrapperServiceController } from './ride-hailing-wrapper-serv
 import { RideHailingWrapperServiceService } from './ride-hailing-wrapper-service.service';
 
 describe('RideHailingWrapperServiceController', () => {
-  let rideHailingWrapperServiceController: RideHailingWrapperServiceController;
+  let controller: RideHailingWrapperServiceController;
 
   beforeEach(async () => {
-    const app: TestingModule = await Test.createTestingModule({
+    const module: TestingModule = await Test.createTestingModule({
       controllers: [RideHailingWrapperServiceController],
       providers: [RideHailingWrapperServiceService],
     }).compile();
 
-    rideHailingWrapperServiceController = app.get<RideHailingWrapperServiceController>(RideHailingWrapperServiceController);
+    controller = module.get<RideHailingWrapperServiceController>(
+      RideHailingWrapperServiceController,
+    );
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(rideHailingWrapperServiceController.getHello()).toBe('Hello World!');
-    });
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
   });
 });

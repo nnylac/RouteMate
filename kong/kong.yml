@@ -1,0 +1,406 @@
+_format_version: "3.0"
+_transform: true
+
+# =============================================================================
+# ROUTEMATE - KONG DECLARATIVE CONFIG (COMPLETE)
+# =============================================================================
+# Public proxy:  http://localhost:8080
+# Admin API:     http://localhost:8081
+# Reload config: curl -X POST http://localhost:8081/config -F config=@kong/kong.yml
+# =============================================================================
+
+services:
+
+  # ── User Service (port 3012) ✅ ──────────────────────────────────────────
+  - name: user-service
+    url: http://host.docker.internal:3012
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: user-service-health
+        paths: [/user-service]
+        methods: [GET]
+        strip_path: false
+      - name: user-register
+        paths: [/user-service/register]
+        methods: [POST]
+        strip_path: false
+      - name: user-login
+        paths: [/user-service/login]
+        methods: [POST]
+        strip_path: false
+      - name: user-list
+        paths: [/user-service/users]
+        methods: [GET]
+        strip_path: false
+      - name: user-by-id
+        paths: [/user-service/users]
+        methods: [GET, PATCH]
+        strip_path: false
+      - name: user-change-password
+        paths: [/user-service/users]
+        methods: [PATCH]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 30
+          policy: local
+          fault_tolerant: true
+
+  # ── Notification Service (port 3006) ✅ ─────────────────────────────────
+  - name: notification-service
+    url: http://host.docker.internal:3006
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: notification-health
+        paths: [/notification-service]
+        methods: [GET]
+        strip_path: false
+      - name: notification-test
+        paths: [/notification-service/test]
+        methods: [POST]
+        strip_path: false
+      - name: notification-list
+        paths: [/notification-service/notifications]
+        methods: [GET]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+          fault_tolerant: true
+
+  # ── Route Cache Service (port 3010) ✅ ──────────────────────────────────
+  - name: route-cache-service
+    url: http://host.docker.internal:3010
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: route-cache-list
+        paths: [/route-cache]
+        methods: [GET, POST, DELETE]
+        strip_path: false
+      - name: route-cache-by-route-id
+        paths: [/route-cache/by-route-id]
+        methods: [GET]
+        strip_path: false
+      - name: route-cache-select-option
+        paths: [/route-cache/select-option]
+        methods: [PATCH]
+        strip_path: false
+      - name: route-cache-user-history
+        paths: [/route-cache/user-history]
+        methods: [GET]
+        strip_path: false
+      - name: route-cache-disrupt
+        paths: [/route-cache/disrupt]
+        methods: [PATCH]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+          fault_tolerant: true
+
+  # ── Card Service (port 3002) ✅ ──────────────────────────────────────────
+  - name: card-service
+    url: http://host.docker.internal:3002
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: card-service-health
+        paths: [/card-service]
+        methods: [GET]
+        strip_path: false
+      - name: card-list
+        paths: [/card-service/cards]
+        methods: [GET, POST]
+        strip_path: false
+      - name: card-by-user
+        paths: [/card-service/cards/user]
+        methods: [GET]
+        strip_path: false
+      - name: card-by-number
+        paths: [/card-service/cards/number]
+        methods: [GET]
+        strip_path: false
+      - name: card-by-id
+        paths: [/card-service/cards]
+        methods: [GET]
+        strip_path: false
+      - name: card-patch-actions
+        paths: [/card-service/cards]
+        methods: [PATCH]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+          fault_tolerant: true
+
+  # ── Transaction Service (port 3011) ✅ ──────────────────────────────────
+  - name: transaction-service
+    url: http://host.docker.internal:3011
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: transaction-list
+        paths: [/transactions]
+        methods: [GET, POST]
+        strip_path: false
+      - name: transaction-by-id
+        paths: [/transactions]
+        methods: [GET]
+        strip_path: false
+      - name: transaction-health-db
+        paths: [/transactions/health/db]
+        methods: [GET]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+          fault_tolerant: true
+
+  # ── Fare Service (port 3004) ✅ ──────────────────────────────────────────
+  - name: fare-service
+    url: http://host.docker.internal:3004
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: fare-service-health
+        paths: [/fare-service]
+        methods: [GET]
+        strip_path: false
+      - name: fare-rules
+        paths: [/fare-service/rules]
+        methods: [GET]
+        strip_path: false
+      - name: fare-import-trunk-bus
+        paths: [/fare-service/import/trunk-bus]
+        methods: [POST]
+        strip_path: false
+      - name: fare-import-mrt-lrt
+        paths: [/fare-service/import/mrt-lrt]
+        methods: [POST]
+        strip_path: false
+      - name: fare-calculate
+        paths: [/fare-service/calculate]
+        methods: [POST]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+          fault_tolerant: true
+
+  # ── Route Planner Orchestrator (port 3014) ✅ ────────────────────────────
+  - name: route-planner-orchestrator
+    url: http://host.docker.internal:3014
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: route-planner-search
+        paths: [/route-planner/search]
+        methods: [POST]
+        strip_path: false
+      - name: route-planner-select
+        paths: [/route-planner/select]
+        methods: [PATCH]
+        strip_path: false
+      - name: route-planner-routes
+        paths: [/route-planner/routes]
+        methods: [GET]
+        strip_path: false
+      - name: route-planner-disrupt
+        paths: [/route-planner/disrupt]
+        methods: [POST]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+          fault_tolerant: true
+
+  # ── Ride-Hailing Aggregator (port 3008) ✅ ──────────────────────────────
+  - name: ride-hailing-aggregator
+    url: http://host.docker.internal:3008
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: ride-hailing-quotes
+        paths: [/ridehail/quotes]
+        methods: [POST]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+          fault_tolerant: true
+
+  # ── Ride-Hailing Wrapper (port 3009) ✅ internal ─────────────────────────
+  - name: ride-hailing-wrapper
+    url: http://host.docker.internal:3009
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: ride-hailing-wrapper-grab
+        paths: [/internal/grab/quotes]
+        methods: [GET]
+        strip_path: false
+      - name: ride-hailing-wrapper-gojek
+        paths: [/internal/gojek/quotes]
+        methods: [GET]
+        strip_path: false
+      - name: ride-hailing-wrapper-tada
+        paths: [/internal/tada/quotes]
+        methods: [GET]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 30
+          policy: local
+          fault_tolerant: true
+
+  # ── Arrival Timing Service (port 3013) ✅ ───────────────────────────────
+  - name: arrival-timing-service
+    url: http://host.docker.internal:3013
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: arrival-timing
+        paths: [/arrival-timing]
+        methods: [GET]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+          fault_tolerant: true
+
+  # ── Maps Wrapper Service (port 3005) ✅ ─────────────────────────────────
+  - name: maps-wrapper-service
+    url: http://host.docker.internal:3005
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: maps-routes
+        paths: [/maps/routes]
+        methods: [GET]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+          fault_tolerant: true
+
+  # ── Card Orchestrator (port 3001) ⚠️ stub ───────────────────────────────
+  - name: card-orchestrator-service
+    url: http://host.docker.internal:3001
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: card-orchestrator
+        paths: [/card-orchestrator]
+        methods: [GET, POST, PATCH, DELETE]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+          fault_tolerant: true
+
+  # ── Fare Comparison Service (port 3003) ⚠️ stub ─────────────────────────
+  - name: fare-comparison-service
+    url: http://host.docker.internal:3003
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: fare-comparison
+        paths: [/fare/compare]
+        methods: [GET, POST]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          policy: local
+          fault_tolerant: true
+
+  # ── Payment Wrapper Service (port 3007) ⚠️ stub ─────────────────────────
+  - name: payment-wrapper-service
+    url: http://host.docker.internal:3007
+    connect_timeout: 10000
+    read_timeout: 30000
+    write_timeout: 30000
+    routes:
+      - name: payment-wrapper
+        paths: [/payment]
+        methods: [GET, POST]
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 30
+          policy: local
+          fault_tolerant: true
+
+# =============================================================================
+# GLOBAL PLUGINS
+# =============================================================================
+plugins:
+
+  - name: prometheus
+    config:
+      status_code_metrics: true
+      latency_metrics: true
+      bandwidth_metrics: true
+      upstream_health_metrics: true
+
+  - name: correlation-id
+    config:
+      header_name: X-Correlation-ID
+      generator: uuid
+      echo_downstream: true
+
+  - name: cors
+    config:
+      origins:
+        - "http://localhost:3000"
+        - "http://localhost:5173"
+      methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
+      headers:
+        - Accept
+        - Authorization
+        - Content-Type
+        - X-Correlation-ID
+      exposed_headers:
+        - X-Correlation-ID
+      credentials: true
+      max_age: 3600

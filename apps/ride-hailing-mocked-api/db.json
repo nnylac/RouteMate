@@ -1,0 +1,117 @@
+{
+  "quotes": [
+    {
+      "id": "1",
+      "origin": "SMU",
+      "destination": "Changi Airport",
+      "results": [
+        { "provider": "Grab", "price": 28.50, "eta": 12, "link": "https://grab.fake/ride1" },
+        { "provider": "Gojek", "price": 26.00, "eta": 15, "link": "https://gojek.fake/ride2" },
+        { "provider": "Tada", "price": 24.50, "eta": 18, "link": "https://tada.fake/ride3" }
+      ]
+    },
+    {
+      "id": "2",
+      "origin": "Woodlands",
+      "destination": "SMU",
+      "results": [
+        { "provider": "Grab", "price": 32.00, "eta": 8, "link": "https://grab.fake/ride4" },
+        { "provider": "Gojek", "price": 30.50, "eta": 10, "link": "https://gojek.fake/ride5" }
+      ]
+    },
+    {
+      "id": "3",
+      "origin": "Marina Bay Sands",
+      "destination": "Sentosa",
+      "results": [
+        { "provider": "Grab", "price": 18.20, "eta": 5, "link": "https://grab.fake/ride6" },
+        { "provider": "Gojek", "price": 19.00, "eta": 7, "link": "https://gojek.fake/ride7" },
+        { "provider": "Ryde", "price": 17.50, "eta": 10, "link": "https://ryde.fake/ride8" }
+      ]
+    },
+    {
+      "id": "4",
+      "origin": "Jurong East",
+      "destination": "Orchard Road",
+      "results": [
+        { "provider": "Grab", "price": 22.40, "eta": 14, "link": "https://grab.fake/ride9" },
+        { "provider": "Tada", "price": 20.80, "eta": 20, "link": "https://tada.fake/ride10" }
+      ]
+    },
+    {
+      "id": "5",
+      "origin": "Ang Mo Kio",
+      "destination": "Vivocity",
+      "results": [
+        { "provider": "Gojek", "price": 25.30, "eta": 11, "link": "https://gojek.fake/ride11" },
+        { "provider": "Grab", "price": 27.00, "eta": 9, "link": "https://grab.fake/ride12" },
+        { "provider": "Ryde", "price": 24.00, "eta": 15, "link": "https://ryde.fake/ride13" }
+      ]
+    },
+    {
+      "id": "6",
+      "origin": "Paya Lebar",
+      "destination": "Tampines Hub",
+      "results": [
+        { "provider": "Grab", "price": 12.50, "eta": 6, "link": "https://grab.fake/ride14" },
+        { "provider": "Gojek", "price": 11.80, "eta": 8, "link": "https://gojek.fake/ride15" }
+      ]
+    },
+    {
+      "id": "7",
+      "origin": "Clementi",
+      "destination": "National University Hospital",
+      "results": [
+        { "provider": "Tada", "price": 9.50, "eta": 4, "link": "https://tada.fake/ride16" },
+        { "provider": "Grab", "price": 11.00, "eta": 3, "link": "https://grab.fake/ride17" }
+      ]
+    },
+    {
+      "id": "8",
+      "origin": "Pasir Ris",
+      "destination": "Bugis Junction",
+      "results": [
+        { "provider": "Grab", "price": 29.80, "eta": 18, "link": "https://grab.fake/ride18" },
+        { "provider": "Gojek", "price": 28.20, "eta": 22, "link": "https://gojek.fake/ride19" },
+        { "provider": "Ryde", "price": 27.50, "eta": 25, "link": "https://ryde.fake/ride20" }
+      ]
+    },
+    {
+      "id": "9",
+      "origin": "Newton Food Centre",
+      "destination": "Clarke Quay",
+      "results": [
+        { "provider": "Grab", "price": 10.20, "eta": 4, "link": "https://grab.fake/ride21" },
+        { "provider": "Gojek", "price": 10.50, "eta": 5, "link": "https://gojek.fake/ride22" }
+      ]
+    },
+    {
+      "id": "10",
+      "origin": "Bishan",
+      "destination": "Lakeside",
+      "results": [
+        { "provider": "Grab", "price": 23.50, "eta": 16, "link": "https://grab.fake/ride23" },
+        { "provider": "Tada", "price": 21.00, "eta": 22, "link": "https://tada.fake/ride24" }
+      ]
+    },
+    {
+      "id": "11",
+      "origin": "Sengkang",
+      "destination": "Sunbury",
+      "results": [
+        { "provider": "Gojek", "price": 31.20, "eta": 20, "link": "https://gojek.fake/ride25" },
+        { "provider": "Grab", "price": 34.00, "eta": 15, "link": "https://grab.fake/ride26" }
+      ]
+    },
+    {
+      "id": "12",
+      "origin": "Raffles Place",
+      "destination": "Holland Village",
+      "results": [
+        { "provider": "Grab", "price": 15.80, "eta": 7, "link": "https://grab.fake/ride27" },
+        { "provider": "Ryde", "price": 14.50, "eta": 12, "link": "https://ryde.fake/ride28" },
+        { "provider": "Tada", "price": 15.00, "eta": 10, "link": "https://tada.fake/ride29" }
+      ]
+    }
+  ]
+}

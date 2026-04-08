@@ -1,4 +1,4 @@
-# MongoDB, Postgres, RabbitMQ
+# MongoDB. Postgres
 services:
   mongo:
     image: mongo
@@ -12,31 +12,73 @@ services:
     volumes:
       - mongodata:/data/db
       - ./databases/mongo/init:/docker-entrypoint-initdb.d
-
   postgres:
-    image: postgres:latest
-    container_name: my-postgres
-    restart: always
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "${POSTGRES_PORT}:5432"
+      image: postgres:latest
+      container_name: my-postgres
+      restart: always
+      environment:
+        POSTGRES_USER: ${POSTGRES_USER}
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      ports:
+        - "${POSTGRES_PORT}:5432"
+      volumes:
+        - pgdata:/var/lib/postgresql
+        - ./databases/postgres/init:/docker-entrypoint-initdb.d
+  kong:
+    image: kong:latest
+    container_name: route-mate-gateway
     volumes:
-      - pgdata:/var/lib/postgresql
-      - ./databases/postgres/init:/docker-entrypoint-initdb.d
-
-  rabbitmq:
-    image: rabbitmq:3.13-management-alpine
-    container_name: my-rabbitmq
+      - ./kong:/usr/local/kong/declarative
+    environment:
+      KONG_DATABASE: "off" # DB-less mode
+      KONG_DECLARATIVE_CONFIG: /usr/local/kong/declarative/kong.yml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+    ports:
+      - "8080:8000" # Public API Gateway port
+      - "8081:8001" # Admin API (for internal use)
+  # ── Monitoring: Prometheus ─────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: route-mate-prometheus
+    restart: always
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheusdata:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--web.enable-lifecycle"       # allows POST /-/reload to hot-reload config
+    ports:
+      - "9090:9090"   # Prometheus UI
+    depends_on:
+      - kong
+  # ── Monitoring: Grafana ────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: route-mate-grafana
     restart: always
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin      # Change this for production!
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafanadata:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
     ports:
-      - "${RABBITMQ_PORT:-5672}:5672"
-      - "15672:15672"   # Management UI → http://localhost:15672
-
+      - "3015:3000"   # Grafana UI at http://localhost:3015
+    depends_on:
+      - prometheus
+ 
+# ── Volumes ────────────────────────────────────────────────────────────────────
+ 
 volumes:
   mongodata:
   pgdata:
+  prometheusdata:
+  grafanadata:

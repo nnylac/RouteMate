@@ -3,6 +3,6 @@ import { RoutePlannerOrchestratorServiceModule } from './route-planner-orchestra
 
 async function bootstrap() {
   const app = await NestFactory.create(RoutePlannerOrchestratorServiceModule);
-  await app.listen(process.env.port ?? 3014);
+  await app.listen(process.env.PORT ?? 3014);
 }
 bootstrap();

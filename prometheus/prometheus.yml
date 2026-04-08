@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s       # How often to scrape targets
+  evaluation_interval: 15s   # How often to evaluate rules
+
+# ── Scrape Configs ────────────────────────────────────────────────────────────
+
+scrape_configs:
+
+  # Kong exposes Prometheus metrics via the prometheus plugin
+  # at http://kong:8001/metrics (admin API, internal Docker network)
+  - job_name: "kong"
+    static_configs:
+      - targets: ["kong:8001"]
+    metrics_path: /metrics
+
+  # ── Optional: scrape the NestJS services directly if you add
+  #    a /metrics endpoint (e.g. using @willsoto/nestjs-prometheus)
+  #    Uncomment when ready:
+  #
+  # - job_name: "ride-hailing-aggregator"
+  #   static_configs:
+  #     - targets: ["host.docker.internal:3008"]
+  #   metrics_path: /metrics
+  #
+  # - job_name: "ride-hailing-wrapper"
+  #   static_configs:
+  #     - targets: ["host.docker.internal:3009"]
+  #   metrics_path: /metrics
