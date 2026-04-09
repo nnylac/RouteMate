@@ -14,7 +14,6 @@ import { PageTopBar } from '@/components/common/PageTopBar';
 import { RouteModeTabs } from '@/components/common/RouteModeTabs';
 import { SearchPanel } from '@/components/common/SearchPanel';
 import { TransitBadge } from '@/components/common/TransitBadge';
-import { recentSearches } from '@/data/mockData';
 import { compareFaresRequest, searchRoutes } from '@/lib/journeyApi';
 import type { FareComparisonResult, FareComparisonRideQuote } from '@/types';
 
@@ -62,8 +61,8 @@ function getTimeSavingsMinutes(ptMinutes: number, rideMinutes: number) {
 
 export function FareComparisonPage() {
   const [searchParams] = useSearchParams();
-  const origin = searchParams.get('origin') ?? 'Jurong East';
-  const destination = searchParams.get('destination') ?? 'SMU';
+  const origin = searchParams.get('origin') ?? '';
+  const destination = searchParams.get('destination') ?? '';
   const requestedRouteId = searchParams.get('routeId');
   const parsedInitialRouteId = requestedRouteId ? Number(requestedRouteId) : NaN;
   const [routeId, setRouteId] = useState<number | null>(
@@ -82,6 +81,12 @@ export function FareComparisonPage() {
 
     if (Number.isFinite(parsedRouteId)) {
       setRouteId(parsedRouteId);
+      return;
+    }
+
+    if (!origin.trim() || !destination.trim()) {
+      setRouteId(null);
+      setIsLoading(false);
       return;
     }
 
@@ -200,12 +205,13 @@ export function FareComparisonPage() {
   const ptMinutes = comparison?.publicTransport.totalDurationMins ?? 0;
   const rideMinutes = comparison?.filters.fastest.durationMins ?? 0;
   const savingsAmount = getSavingsAmount(ptTotal, rideTotal);
+  const savingsPerPax = paxCount > 0 ? savingsAmount / paxCount : savingsAmount;
   const timeSavingsMinutes = getTimeSavingsMinutes(ptMinutes, rideMinutes);
 
   return (
     <div className="page">
       <PageTopBar showBack />
-      <SearchPanel from={origin} to={destination} recentSearches={recentSearches} />
+      <SearchPanel from={origin} to={destination} />
 
       <RouteModeTabs
         active="fare-comparison"
@@ -219,7 +225,11 @@ export function FareComparisonPage() {
       <div className="stack-md fare-comparison-page">
         {isLoading ? <div className="empty-state">Loading fare comparison...</div> : null}
 
-        {!isLoading ? (
+        {!isLoading && (!origin.trim() || !destination.trim()) ? (
+          <div className="empty-state">Enter both origin and destination to compare fares.</div>
+        ) : null}
+
+        {!isLoading && origin.trim() && destination.trim() ? (
           <>
             <div className="fare-comparison-header">
               <h2 className="fare-comparison-title">Fare Comparison</h2>
@@ -404,10 +414,18 @@ export function FareComparisonPage() {
 
             <section className="fare-comparison-section fare-comparison-section--summary">
               <div className="fare-comparison-summary-row">
-                <div className="fare-comparison-summary-label">Savings</div>
+                <div className="fare-comparison-summary-label">Total Savings</div>
                 <div className="fare-comparison-summary-value">
                   <HugeiconsIcon icon={SchoolBusIcon} size={20} strokeWidth={1.8} />
                   <span>${savingsAmount.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div className="fare-comparison-summary-row">
+                <div className="fare-comparison-summary-label">Savings per Pax</div>
+                <div className="fare-comparison-summary-value">
+                  <HugeiconsIcon icon={SchoolBusIcon} size={20} strokeWidth={1.8} />
+                  <span>${savingsPerPax.toFixed(2)}</span>
                 </div>
               </div>
 

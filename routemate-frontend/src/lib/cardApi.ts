@@ -115,6 +115,7 @@ export function updateTransactionStatusRequest(
     cardId?: string;
     userId?: string | number;
     amount?: number;
+    balance?: number;
   },
 ) {
   return apiRequest<TransactionRecord>(

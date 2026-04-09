@@ -6,9 +6,8 @@ import { PageTopBar } from '@/components/common/PageTopBar';
 import { RouteModeTabs } from '@/components/common/RouteModeTabs';
 import { SearchPanel } from '@/components/common/SearchPanel';
 import { TransitBadge } from '@/components/common/TransitBadge';
-import { recentSearches } from '@/data/mockData';
 import { useBookmarkedRoutes } from '@/hooks/useBookmarkedRoutes';
-import { searchRoutes, selectRoute } from '@/lib/journeyApi';
+import { getRecentSearchInputs, searchRoutes, selectRoute } from '@/lib/journeyApi';
 import type { DetailedRouteOption, SavedRoute } from '@/types';
 
 function renderDurationParts(durationLabel: string) {
@@ -80,14 +79,39 @@ function toSavedRouteSnapshot(
 export function RouteResultsPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const origin = searchParams.get('origin') ?? 'Jurong East';
-  const destination = searchParams.get('destination') ?? 'SMU';
+  const origin = searchParams.get('origin') ?? '';
+  const destination = searchParams.get('destination') ?? '';
   const [routeOptions, setRouteOptions] = useState<DetailedRouteOption[]>([]);
   const [routeId, setRouteId] = useState<number | null>(null);
   const [busDuration, setBusDuration] = useState<string | null>(null);
   const [rideDuration, setRideDuration] = useState<string | null>(null);
+  const [recentSearchInputs, setRecentSearchInputs] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { isBookmarked, toggleBookmark } = useBookmarkedRoutes();
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadRecentSearchInputs() {
+      try {
+        const inputs = await getRecentSearchInputs();
+
+        if (!isCancelled) {
+          setRecentSearchInputs(inputs);
+        }
+      } catch {
+        if (!isCancelled) {
+          setRecentSearchInputs([]);
+        }
+      }
+    }
+
+    void loadRecentSearchInputs();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let isCancelled = false;
@@ -99,6 +123,13 @@ export function RouteResultsPage() {
         setRouteId(null);
         setBusDuration(null);
         setRideDuration(null);
+      }
+
+      if (!origin.trim() || !destination.trim()) {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+        return;
       }
 
       const routeResult = await searchRoutes(origin, destination)
@@ -143,7 +174,7 @@ export function RouteResultsPage() {
   return (
     <div className="page">
       <PageTopBar showBack />
-      <SearchPanel from={origin} to={destination} recentSearches={recentSearches} />
+      <SearchPanel from={origin} to={destination} recentSearches={recentSearchInputs} />
 
       <RouteModeTabs
         active="routes"
@@ -157,7 +188,11 @@ export function RouteResultsPage() {
       <div className="stack-md">
         {isLoading ? <div className="empty-state">Loading routes...</div> : null}
 
-        {!isLoading && visibleRouteOptions.length === 0 ? (
+        {!isLoading && (!origin.trim() || !destination.trim()) ? (
+          <div className="empty-state">Enter both origin and destination to search for routes.</div>
+        ) : null}
+
+        {!isLoading && origin.trim() && destination.trim() && visibleRouteOptions.length === 0 ? (
           <div className="empty-state">No route options found.</div>
         ) : null}
 

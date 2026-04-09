@@ -45,6 +45,7 @@ export class RabbitMQPublisher implements OnModuleDestroy {
     cardId: string;
     userId: string | number;
     amount: number;
+    balance?: number;
     transactionId?: number;
   }) {
     return this.publish('card.topup.success', {
@@ -58,6 +59,7 @@ export class RabbitMQPublisher implements OnModuleDestroy {
     cardId: string;
     userId: string | number;
     amount: number;
+    balance?: number;
     failureReason?: string;
     transactionId?: number;
   }) {
@@ -71,6 +73,7 @@ export class RabbitMQPublisher implements OnModuleDestroy {
     cardId: string;
     userId: string | number;
     amount: number;
+    balance?: number;
     transactionId?: number;
     failureReason?: string;
   }) {
@@ -85,6 +88,7 @@ export class RabbitMQPublisher implements OnModuleDestroy {
     cardId: string;
     userId: string | number;
     amount: number;
+    balance?: number;
     transactionId?: number;
   }) {
     return this.publish('card.deduction.success', {
@@ -98,6 +102,7 @@ export class RabbitMQPublisher implements OnModuleDestroy {
     cardId: string;
     userId: string | number;
     amount: number;
+    balance?: number;
     failureReason?: string;
     transactionId?: number;
   }) {

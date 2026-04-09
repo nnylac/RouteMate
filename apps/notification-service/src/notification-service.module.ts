@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 // eslint-disable-next-line prettier/prettier
 import { Notification, NotificationSchema } from '../schemas/notification-service-schema';
+import { NotificationGateway } from './notification-gateway';
 
 @Module({
   imports: [
@@ -24,6 +25,6 @@ import { Notification, NotificationSchema } from '../schemas/notification-servic
     ]),
   ],
   controllers: [NotificationServiceController],
-  providers: [NotificationService],
+  providers: [NotificationService, NotificationGateway],
 })
 export class NotificationServiceModule {}

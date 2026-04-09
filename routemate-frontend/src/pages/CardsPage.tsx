@@ -5,7 +5,6 @@ import { PageTopBar } from '@/components/common/PageTopBar';
 import { SearchPanel } from '@/components/common/SearchPanel';
 import { SegmentTabs } from '@/components/common/SegmentTabs';
 import { useCards } from '@/context/CardContext';
-import { recentSearches } from '@/data/mockData';
 import { useNavigate } from 'react-router-dom';
 
 export function CardsPage() {
@@ -23,7 +22,7 @@ export function CardsPage() {
   return (
     <div className="page">
       <PageTopBar title="Home" titleAlign="left" />
-      <SearchPanel recentSearches={recentSearches} />
+      <SearchPanel />
       <SegmentTabs
         items={['Recent', 'Saved Routes', 'My Cards']}
         active="My Cards"

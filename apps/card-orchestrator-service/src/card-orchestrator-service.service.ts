@@ -82,6 +82,10 @@ export class CardOrchestratorServiceService {
         cardId: id,
         userId,
         amount,
+        balance:
+          typeof (updatedCard as { balance?: unknown })?.balance === 'number'
+            ? ((updatedCard as { balance: number }).balance)
+            : undefined,
       });
     }
 
@@ -154,14 +158,15 @@ export class CardOrchestratorServiceService {
 
   async updateTransactionStatus(
     transactionId: number,
-    body: {
-      status: TransactionStatus;
-      failureReason?: string;
-      transactionType?: TransactionType;
-      cardId?: string;
-      userId?: string | number;
-      amount?: number;
-    },
+      body: {
+        status: TransactionStatus;
+        failureReason?: string;
+        transactionType?: TransactionType;
+        cardId?: string;
+        userId?: string | number;
+        amount?: number;
+        balance?: number;
+      },
   ) {
     if (!transactionId) {
       throw new BadRequestException('transactionId is required');
@@ -293,17 +298,19 @@ export class CardOrchestratorServiceService {
   private publishStatusEvent(
     status: TransactionStatus,
     transaction: Partial<OutsystemsTransaction>,
-    context?: {
-      transactionType?: TransactionType;
-      cardId?: string;
-      userId?: string | number;
-      amount?: number;
-      failureReason?: string;
-    },
+      context?: {
+        transactionType?: TransactionType;
+        cardId?: string;
+        userId?: string | number;
+        amount?: number;
+        balance?: number;
+        failureReason?: string;
+      },
   ) {
     const cardId = transaction.CardId ?? context?.cardId;
     const userId = transaction.UserId ?? context?.userId;
     const amount = transaction.Amount ?? context?.amount;
+    const balance = context?.balance;
     const transactionType = transaction.TransactionType ?? context?.transactionType;
     const failureReason = transaction.FailureReason ?? context?.failureReason;
 
@@ -321,6 +328,7 @@ export class CardOrchestratorServiceService {
           cardId,
           userId,
           amount,
+          balance,
           transactionId: transaction.Id,
         });
       } else if (status === 'failed') {
@@ -328,6 +336,7 @@ export class CardOrchestratorServiceService {
           cardId,
           userId,
           amount,
+          balance,
           failureReason,
           transactionId: transaction.Id,
         });
@@ -336,6 +345,7 @@ export class CardOrchestratorServiceService {
           cardId,
           userId,
           amount,
+          balance,
           failureReason,
           transactionId: transaction.Id,
         });
@@ -345,6 +355,7 @@ export class CardOrchestratorServiceService {
         cardId,
         userId,
         amount,
+        balance,
         failureReason,
         transactionId: transaction.Id,
       });

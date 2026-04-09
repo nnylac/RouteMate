@@ -111,7 +111,7 @@ export class FareComparisonServiceService {
     const { route_id, group_size, fare_category, sort_by } = dto;
     const route = await this.fetchLockedRoute(route_id);
     const selectedOption = this.resolveSelectedOption(route, route_id);
-    const ptResult = await this.calculatePtFare(
+    const ptResult = this.calculatePtFare(
       selectedOption,
       (fare_category ?? 'adult_card') as FareCategoryKey,
     );
@@ -230,10 +230,10 @@ export class FareComparisonServiceService {
     return ptOption ?? options[0];
   }
 
-  private async calculatePtFare(
+  private calculatePtFare(
     option: CachedRouteOption,
     fareCategory: FareCategoryKey,
-  ): Promise<PtFareResult> {
+  ): PtFareResult {
     const segments = option.segments ?? [];
     const breakdown: FareBreakdownItem[] = [];
     const payableSegments = segments.filter(

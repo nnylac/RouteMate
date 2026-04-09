@@ -1,4 +1,6 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Alert01Icon, CheckmarkCircle03Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { LoginPage } from '@/pages/LoginPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { SignUpPageConnected } from '@/pages/SignUpPageConnected';
@@ -18,8 +20,75 @@ import { AddCardPage } from '@/pages/AddCardPage';
 import { ProfilePageConnected } from '@/pages/ProfilePageConnected';
 import { EditProfilePageConnected } from '@/pages/EditProfilePageConnected';
 import { ShellLayout } from '@/components/layout/ShellLayout';
+import { useEffect } from 'react';
+import toast from 'react-hot-toast';
+import { readStoredUser } from '@/lib/authStorage';
+import { connectNotificationSocket, disconnectNotificationSocket } from '@/lib/notificationSocket';
+
 
 export function AppRouter() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const user = readStoredUser();
+
+    if (!user?.id) {
+      disconnectNotificationSocket();
+      return;
+    }
+
+    const socket = connectNotificationSocket(user.id);
+
+    if (!socket) {
+      return;
+    }
+
+    const handleNotification = (notification: {
+      type?: string;
+      title?: string;
+      message?: string;
+    }) => {
+      const isFailure =
+        notification.type?.includes('failed') ||
+        notification.type?.includes('rollback');
+
+      toast.custom(
+        (toastInstance) => (
+          <div
+            className={`notification-toast ${
+              isFailure ? 'notification-toast--error' : ''
+            } ${toastInstance.visible ? 'notification-toast--visible' : ''}`}
+          >
+            <div className="notification-toast__icon" aria-hidden="true">
+              {isFailure ? (
+                <HugeiconsIcon icon={Alert01Icon} size={18} strokeWidth={1.9} />
+              ) : (
+                <HugeiconsIcon icon={CheckmarkCircle03Icon} size={18} strokeWidth={1.9} />
+              )}
+            </div>
+            <div className="notification-toast__content">
+              <div className="notification-toast__title">
+                {notification.title ?? 'Notification'}
+              </div>
+              <div className="notification-toast__message">
+                {notification.message ?? 'New notification received.'}
+              </div>
+            </div>
+          </div>
+        ),
+        {
+          duration: 4000,
+        },
+      );
+    };
+
+    socket.on('notification.created', handleNotification);
+
+    return () => {
+      socket.off('notification.created', handleNotification);
+    };
+  }, [location.pathname]);
+  
   return (
     <Routes>
       <Route path="/" element={<LoginPage />} />

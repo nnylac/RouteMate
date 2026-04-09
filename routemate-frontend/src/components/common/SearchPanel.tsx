@@ -2,6 +2,7 @@ import { ArrowDataTransferVerticalIcon, Location01Icon, Search01Icon } from '@hu
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getRecentSearchInputs } from '@/lib/journeyApi';
 
 interface SearchPanelProps {
   from?: string;
@@ -24,9 +25,37 @@ export function SearchPanel({
   const [fromValue, setFromValue] = useState(from ?? initialFrom);
   const [toValue, setToValue] = useState(to ?? initialTo);
   const [activeField, setActiveField] = useState<ActiveField>(null);
+  const [fetchedRecentSearches, setFetchedRecentSearches] = useState<string[]>([]);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const fromInputRef = useRef<HTMLInputElement | null>(null);
   const toInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadRecentSearches() {
+      try {
+        const inputs = await getRecentSearchInputs();
+
+        if (!isCancelled) {
+          setFetchedRecentSearches(inputs);
+        }
+      } catch {
+        if (!isCancelled) {
+          setFetchedRecentSearches([]);
+        }
+      }
+    }
+
+    void loadRecentSearches();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  const availableRecentSearches =
+    recentSearches.length > 0 ? recentSearches : fetchedRecentSearches;
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -61,11 +90,11 @@ export function SearchPanel({
     const query = (activeField === 'from' ? fromValue : toValue).trim().toLowerCase();
 
     if (!query) {
-      return recentSearches;
+      return availableRecentSearches;
     }
 
-    return recentSearches.filter((search) => search.toLowerCase().includes(query));
-  }, [activeField, fromValue, recentSearches, toValue]);
+    return availableRecentSearches.filter((search) => search.toLowerCase().includes(query));
+  }, [activeField, availableRecentSearches, fromValue, toValue]);
 
   function handleSwap() {
     setFromValue(toValue);

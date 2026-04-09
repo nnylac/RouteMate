@@ -8,6 +8,7 @@ export interface TransactionMetadata {
   category: 'Public Transport' | 'Ride-Hailing' | 'Top Up';
   title: string;
   route: string;
+  status?: 'pending' | 'success' | 'failed' | 'rolled_back';
   routeBreakdown?: DetailedRouteOption;
 }
 
@@ -52,4 +53,18 @@ export function getTransactionMetadata(transactionId: number | string) {
       (item) => normalizeTransactionId(item.transactionId) === normalizedTransactionId,
     ) ?? null
   );
+}
+
+export function updateTransactionMetadataStatus(
+  transactionId: number | string,
+  status: 'pending' | 'success' | 'failed' | 'rolled_back',
+) {
+  const normalizedTransactionId = normalizeTransactionId(transactionId);
+  const nextItems = readAllMetadata().map((item) =>
+    normalizeTransactionId(item.transactionId) === normalizedTransactionId
+      ? { ...item, status }
+      : item,
+  );
+
+  writeAllMetadata(nextItems);
 }

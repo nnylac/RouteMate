@@ -1,21 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { NotificationServiceModule } from './notification-service.module';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { startNotificationConsumer } from './rabbitmq.consumer';
 import { NotificationService } from './notification-service.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(NotificationServiceModule);
-
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.RMQ,
-    options: {
-      urls: ['amqp://guest:guest@localhost:5672'],
-      queue: 'route_events',
-      queueOptions: { durable: true },
-    },
-  });
 
   const config = new DocumentBuilder()
     .setTitle('Notification Service')
@@ -37,9 +27,20 @@ async function bootstrap() {
     ],
   });
 
-  await app.startAllMicroservices();
   await app.listen(process.env.PORT ?? 3006);
+  console.log(
+    `[NotificationService] HTTP server listening on ${process.env.PORT ?? 3006}`,
+  );
 
-  await startNotificationConsumer(app.get(NotificationService));
+  try {
+    await startNotificationConsumer(app.get(NotificationService));
+    console.log('[NotificationService] Topic consumer started');
+  } catch (error) {
+    console.warn(
+      `[NotificationService] Topic consumer failed to start: ${
+        (error as Error).message
+      }`,
+    );
+  }
 }
 bootstrap();

@@ -408,6 +408,37 @@ export async function getRecentSelectedRoutes() {
     .filter((route): route is SavedRoute => route !== null);
 }
 
+export async function getRecentSearchInputs() {
+  const userId = getUserId();
+  const history = await apiRequest<CachedRouteHistoryItem[]>(
+    `/route-cache/user-history?user_id=${encodeURIComponent(String(userId))}`,
+  );
+
+  const seen = new Set<string>();
+  const inputs: string[] = [];
+
+  for (const item of history) {
+    for (const value of [item.origin_label, item.destination_label]) {
+      const normalized = value?.trim();
+
+      if (!normalized) {
+        continue;
+      }
+
+      const key = normalized.toLowerCase();
+
+      if (seen.has(key)) {
+        continue;
+      }
+
+      seen.add(key);
+      inputs.push(normalized);
+    }
+  }
+
+  return inputs;
+}
+
 export function getRideQuotes(origin: string, destination: string) {
   return apiRequest<RideQuoteResponse>('/ridehail/quotes', {
     method: 'POST',

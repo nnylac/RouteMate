@@ -16,7 +16,10 @@ import {
   createPaymentIntent,
   createRefund,
 } from '@/lib/paymentApi';
-import { saveTransactionMetadata } from '@/lib/transactionHistoryStorage';
+import {
+  saveTransactionMetadata,
+  updateTransactionMetadataStatus,
+} from '@/lib/transactionHistoryStorage';
 
 const amounts = [10, 20, 30, 50, 100];
 
@@ -91,6 +94,7 @@ export function TopUpPageConnected() {
     let transactionSyncWarning = false;
     let paymentIntentId: string | null = null;
     let transactionUserId: string | number | null = null;
+    let appUserId: string | null = null;
 
     try {
       const storedUser = readStoredUser();
@@ -98,6 +102,8 @@ export function TopUpPageConnected() {
       if (!storedUser) {
         throw new Error('No signed-in user found. Please log in again.');
       }
+
+      appUserId = storedUser.id;
 
       if (!storedUser.transactionUserId) {
         throw new Error('No signed-in user ID found for this account. Please log in again.');
@@ -123,6 +129,7 @@ export function TopUpPageConnected() {
             category: 'Top Up',
             title: 'Top Up',
             route: 'Card top up',
+            status: 'pending',
           });
         } else {
           transactionSyncWarning = true;
@@ -151,7 +158,7 @@ export function TopUpPageConnected() {
         throw new Error(`Payment failed with status: ${confirmation.status}`);
       }
       paymentSucceeded = true;
-      await topUpCard(currentCard.id, parsedAmount);
+      const updatedCard = await topUpCard(currentCard.id, parsedAmount);
       cardBalanceUpdated = true;
 
       if (transactionId !== null) {
@@ -160,9 +167,11 @@ export function TopUpPageConnected() {
             status: 'success',
             transactionType: 'top_up',
             cardId: currentCard.id,
-            userId,
+            userId: appUserId ?? userId,
             amount: parsedAmount,
+            balance: updatedCard.balance,
           });
+          updateTransactionMetadataStatus(transactionId, 'success');
         } catch {
           transactionSyncWarning = true;
         }
@@ -197,9 +206,10 @@ export function TopUpPageConnected() {
                 failureReason: message,
                 transactionType: 'top_up',
                 cardId: currentCard.id,
-                userId: transactionUserId ?? '',
+                userId: appUserId ?? transactionUserId ?? '',
                 amount: parsedAmount,
               });
+              updateTransactionMetadataStatus(transactionId, 'rolled_back');
             } catch {
               // Keep the original refund/callback error visible if transaction patch fails.
             }
@@ -220,9 +230,10 @@ export function TopUpPageConnected() {
                 failureReason: `${message} Refund error: ${refundMessage}`,
                 transactionType: 'top_up',
                 cardId: currentCard.id,
-                userId: transactionUserId ?? '',
+                userId: appUserId ?? transactionUserId ?? '',
                 amount: parsedAmount,
               });
+              updateTransactionMetadataStatus(transactionId, 'failed');
             } catch {
               // Keep the original refund failure visible if transaction patch fails.
             }
@@ -240,9 +251,10 @@ export function TopUpPageConnected() {
             failureReason: message,
             transactionType: 'top_up',
             cardId: currentCard.id,
-            userId: transactionUserId ?? '',
+            userId: appUserId ?? transactionUserId ?? '',
             amount: parsedAmount,
           });
+          updateTransactionMetadataStatus(transactionId, 'failed');
         } catch {
           // Keep the original top-up error visible if transaction patch fails.
         }

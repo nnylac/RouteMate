@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom';
 import { RouteModeTabs } from '@/components/common/RouteModeTabs';
 import { PageTopBar } from '@/components/common/PageTopBar';
 import { SearchPanel } from '@/components/common/SearchPanel';
-import { recentSearches } from '@/data/mockData';
 import { getRideQuotes, searchRoutes, type RideQuote } from '@/lib/journeyApi';
 
 function formatDuration(minutes: number) {
@@ -16,8 +15,8 @@ function formatDuration(minutes: number) {
 
 export function RideHailingPage() {
   const [searchParams] = useSearchParams();
-  const origin = searchParams.get('origin') ?? 'Jurong East';
-  const destination = searchParams.get('destination') ?? 'SMU';
+  const origin = searchParams.get('origin') ?? '';
+  const destination = searchParams.get('destination') ?? '';
   const initialRouteId = searchParams.get('routeId');
   const [busDuration, setBusDuration] = useState<string | null>(null);
   const [rideDuration, setRideDuration] = useState<string | null>(null);
@@ -34,6 +33,13 @@ export function RideHailingPage() {
         setBusDuration(null);
         setRideDuration(null);
         setRideHailingOptions([]);
+      }
+
+      if (!origin.trim() || !destination.trim()) {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+        return;
       }
 
       const [routeResult, rideResult] = await Promise.allSettled([
@@ -83,7 +89,7 @@ export function RideHailingPage() {
   return (
     <div className="page">
       <PageTopBar showBack />
-      <SearchPanel from={origin} to={destination} recentSearches={recentSearches} />
+      <SearchPanel from={origin} to={destination} />
 
       <RouteModeTabs
         active="ride-hailing"
@@ -97,7 +103,11 @@ export function RideHailingPage() {
       <div className="stack-md">
         {isLoading ? <div className="empty-state">Loading ride options...</div> : null}
 
-        {!isLoading && visibleRideOptions.length === 0 ? (
+        {!isLoading && (!origin.trim() || !destination.trim()) ? (
+          <div className="empty-state">Enter both origin and destination to search for rides.</div>
+        ) : null}
+
+        {!isLoading && origin.trim() && destination.trim() && visibleRideOptions.length === 0 ? (
           <div className="empty-state">No ride options found.</div>
         ) : null}
 

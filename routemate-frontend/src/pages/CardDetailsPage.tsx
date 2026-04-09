@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AddMoneyCircleIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -25,6 +25,7 @@ interface TransactionDisplayItem {
 
 interface TransactionSection {
   dateLabel: string;
+  sortTime: number;
   items: TransactionDisplayItem[];
 }
 
@@ -63,6 +64,18 @@ function formatTransactionDate(value: string | null) {
   const year = date.getFullYear();
 
   return `${day} ${month} ${year}`;
+}
+
+function formatTransactionStatus(status: string | null | undefined) {
+  if (!status) {
+    return 'Unknown';
+  }
+
+  return status
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
 }
 
 export function CardDetailsPage() {
@@ -129,7 +142,7 @@ export function CardDetailsPage() {
                 (record.TransactionType === 'top_up' ? 'Top Up' : record.TransactionType),
               amount: Number(record.Amount ?? 0),
               route: record.TransactionType === 'top_up' ? null : (metadata?.route ?? 'No route details available'),
-              status: record.Status,
+              status: formatTransactionStatus(metadata?.status ?? record.Status),
               createdAt: record.CreatedAt ?? null,
               transactionType: record.TransactionType,
               routeBreakdown: metadata?.routeBreakdown,
@@ -155,17 +168,34 @@ export function CardDetailsPage() {
     };
   }, [currentCard]);
 
-  const transactionSections = transactions.reduce<TransactionSection[]>((sections, transaction) => {
-    const dateLabel = formatTransactionDate(transaction.createdAt);
-    const currentSection = sections.find((section) => section.dateLabel === dateLabel);
+  const transactionSections = useMemo(() => {
+    const groupedSections = new Map<string, TransactionSection>();
 
-    if (currentSection) {
-      currentSection.items.push(transaction);
-      return sections;
+    for (const transaction of transactions) {
+      const parsedTime = transaction.createdAt
+        ? new Date(transaction.createdAt).getTime()
+        : Number.NaN;
+      const sortTime = Number.isNaN(parsedTime) ? 0 : parsedTime;
+      const dateLabel = formatTransactionDate(transaction.createdAt);
+      const existingSection = groupedSections.get(dateLabel);
+
+      if (existingSection) {
+        existingSection.items.push(transaction);
+        existingSection.sortTime = Math.max(existingSection.sortTime, sortTime);
+        continue;
+      }
+
+      groupedSections.set(dateLabel, {
+        dateLabel,
+        sortTime,
+        items: [transaction],
+      });
     }
 
-    return [...sections, { dateLabel, items: [transaction] }];
-  }, []);
+    return Array.from(groupedSections.values()).sort(
+      (left, right) => right.sortTime - left.sortTime,
+    );
+  }, [transactions]);
 
   if (!currentCard) {
     return (

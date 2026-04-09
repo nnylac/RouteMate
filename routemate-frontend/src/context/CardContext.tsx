@@ -11,8 +11,8 @@ interface CardContextValue {
   latestTopUpAmount: number | null;
   refreshCards: () => Promise<void>;
   createCard: (cardType: CardType) => Promise<CardInfo>;
-  topUpCard: (cardId: string, amount: number) => Promise<void>;
-  deductFare: (cardId: string, amount: number) => Promise<void>;
+  topUpCard: (cardId: string, amount: number) => Promise<CardInfo>;
+  deductFare: (cardId: string, amount: number) => Promise<CardInfo>;
 }
 
 const CardContext = createContext<CardContextValue | null>(null);
@@ -92,6 +92,7 @@ export function CardProvider({ children }: { children: ReactNode }) {
       ),
     );
     setLatestTopUpAmount(amount);
+    return updatedCard;
   }
 
   async function deductFare(cardId: string, amount: number) {
@@ -106,6 +107,7 @@ export function CardProvider({ children }: { children: ReactNode }) {
           : card,
       ),
     );
+    return updatedCard;
   }
 
   const value = useMemo(

@@ -4,7 +4,6 @@ import { PageTopBar } from '@/components/common/PageTopBar';
 import { RouteCard } from '@/components/common/RouteCard';
 import { SearchPanel } from '@/components/common/SearchPanel';
 import { SegmentTabs } from '@/components/common/SegmentTabs';
-import { recentSearches } from '@/data/mockData';
 import { useBookmarkedRoutes } from '@/hooks/useBookmarkedRoutes';
 import { getRecentSelectedRoutes } from '@/lib/journeyApi';
 import type { SavedRoute } from '@/types';
@@ -79,7 +78,7 @@ export function HomePage() {
   return (
     <div className="page">
       <PageTopBar title="Home" titleAlign="left" />
-      <SearchPanel recentSearches={recentSearches} />
+      <SearchPanel />
       <SegmentTabs items={tabs} active={activeTab} onChange={handleTabChange} />
 
       <div className="stack-lg">

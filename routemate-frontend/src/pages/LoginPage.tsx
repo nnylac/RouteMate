@@ -1,3 +1,5 @@
+import { InLoveIcon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { TextInput } from '@/components/common/TextInput';
@@ -56,7 +58,9 @@ export function LoginPage() {
 
   return (
     <div className="page page--centered login-page">
-      <div className="avatar-placeholder avatar-placeholder--lg" />
+      <div className="login-page__logo" aria-hidden="true">
+        <HugeiconsIcon icon={InLoveIcon} size={70} strokeWidth={1.7} />
+      </div>
       <h1 className="brand-title">RouteMate</h1>
 
       <div className="form-stack">

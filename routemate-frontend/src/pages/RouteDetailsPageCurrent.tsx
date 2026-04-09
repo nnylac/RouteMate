@@ -13,7 +13,6 @@ import { PageTopBar } from '@/components/common/PageTopBar';
 import { SearchPanel } from '@/components/common/SearchPanel';
 import { TransitBadge } from '@/components/common/TransitBadge';
 import { useCards } from '@/context/CardContext';
-import { recentSearches } from '@/data/mockData';
 import { useBookmarkedRoutes } from '@/hooks/useBookmarkedRoutes';
 import { readStoredUser } from '@/lib/authStorage';
 import {
@@ -21,7 +20,10 @@ import {
   updateTransactionStatusRequest,
 } from '@/lib/cardApi';
 import { searchRoutes } from '@/lib/journeyApi';
-import { saveTransactionMetadata } from '@/lib/transactionHistoryStorage';
+import {
+  saveTransactionMetadata,
+  updateTransactionMetadataStatus,
+} from '@/lib/transactionHistoryStorage';
 import type { DetailedRouteOption, RouteBadge, RouteSegmentDetail, SavedRoute } from '@/types';
 
 interface SegmentCardData {
@@ -312,9 +314,9 @@ function SegmentCard({
 export function RouteDetailsPageCurrent() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { cards, deductFare } = useCards();
-  const origin = searchParams.get('origin') ?? 'Jurong East';
-  const destination = searchParams.get('destination') ?? 'SMU';
+  const { cards, deductFare, isLoading: isCardsLoading } = useCards();
+  const origin = searchParams.get('origin') ?? '';
+  const destination = searchParams.get('destination') ?? '';
   const optionId = searchParams.get('optionId');
   const routeId = searchParams.get('routeId');
   const [routeOptions, setRouteOptions] = useState<DetailedRouteOption[]>([]);
@@ -333,6 +335,13 @@ export function RouteDetailsPageCurrent() {
         setIsLoading(true);
         setRouteOptions([]);
         setExpandedCardIds([]);
+      }
+
+      if (!origin.trim() || !destination.trim()) {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+        return;
       }
 
       const result = await searchRoutes(origin, destination)
@@ -390,8 +399,8 @@ export function RouteDetailsPageCurrent() {
       fare: Number(selectedRoute.fare ?? 0),
     };
   }, [destination, origin, routeId, routeKey, selectedRoute]);
-  const currentBalance = cards[0]?.balance ?? 0;
-  const currentCard = cards[0];
+  const currentCard = cards[0] ?? null;
+  const currentBalance = currentCard?.balance ?? null;
 
   const segmentCards = useMemo(
     () =>
@@ -421,7 +430,22 @@ export function RouteDetailsPageCurrent() {
   }
 
   async function handleMarkJourneyComplete() {
-    if (!selectedRoute || !currentCard || !selectedRoute.fare) {
+    if (!selectedRoute) {
+      setJourneyError('No route is selected for this journey.');
+      return;
+    }
+
+    if (!currentCard) {
+      setJourneyError(
+        isCardsLoading
+          ? 'Your card is still loading. Please try again in a moment.'
+          : 'No transport card was found for this account.',
+      );
+      return;
+    }
+
+    if (!selectedRoute.fare) {
+      setJourneyError('This route does not have a payable fare to deduct.');
       return;
     }
 
@@ -432,13 +456,18 @@ export function RouteDetailsPageCurrent() {
       return;
     }
 
+    if (!storedUser.transactionUserId) {
+      setJourneyError('No signed-in user ID found for this account. Please log in again.');
+      return;
+    }
+
     let transactionId: number | null = null;
 
     try {
       setIsCompletingJourney(true);
       setJourneyError('');
       const transaction = await createTransactionRequest({
-        userId: storedUser.id,
+        userId: storedUser.transactionUserId,
         cardId: currentCard.id,
         amount: selectedRoute.fare,
         transactionType: 'payment',
@@ -457,16 +486,19 @@ export function RouteDetailsPageCurrent() {
         category: getTransactionCategory(selectedRoute),
         title: getTransactionTitle(selectedRoute),
         route: `${origin} → ${destination}`,
+        status: 'pending',
         routeBreakdown: selectedRoute,
       });
-      await deductFare(currentCard.id, selectedRoute.fare);
+      const updatedCard = await deductFare(currentCard.id, selectedRoute.fare);
       await updateTransactionStatusRequest(transactionId, {
         status: 'success',
         transactionType: 'payment',
         cardId: currentCard.id,
-        userId: storedUser.id,
+        userId: storedUser.transactionUserId,
         amount: selectedRoute.fare,
+        balance: updatedCard.balance,
       });
+      updateTransactionMetadataStatus(transactionId, 'success');
 
       navigate('/journey-complete', {
         replace: true,
@@ -486,9 +518,10 @@ export function RouteDetailsPageCurrent() {
             failureReason: message,
             transactionType: 'payment',
             cardId: currentCard.id,
-            userId: storedUser.id,
+            userId: storedUser.transactionUserId,
             amount: selectedRoute.fare,
           });
+          updateTransactionMetadataStatus(transactionId, 'failed');
         } catch {
           // Preserve the original deduction error if transaction update fails.
         }
@@ -503,7 +536,7 @@ export function RouteDetailsPageCurrent() {
   return (
     <div className="page">
       <PageTopBar showBack />
-      <SearchPanel from={origin} to={destination} recentSearches={recentSearches} />
+      <SearchPanel from={origin} to={destination} />
 
       {selectedRoute ? (
         <div className="route-header-inline route-header-inline--details">
@@ -572,20 +605,28 @@ export function RouteDetailsPageCurrent() {
               <div>
                 {isCompletingJourney
                   ? 'Completing journey...'
-                  : `Current Balance (before deduction): $${currentBalance.toFixed(2)}`}
+                  : currentBalance !== null
+                    ? `Current Balance (before deduction): $${currentBalance.toFixed(2)}`
+                    : isCardsLoading
+                      ? 'Loading card balance...'
+                      : 'No transport card found.'}
               </div>
             </div>
 
-            {journeyError ? <div className="muted-caption">{journeyError}</div> : null}
+            {journeyError ? <div className="route-detail-error">{journeyError}</div> : null}
 
             <div className="route-detail-actions">
               <button
                 className="primary-button primary-button--pill"
                 type="button"
                 onClick={() => void handleMarkJourneyComplete()}
-                disabled={!currentCard || isCompletingJourney}
+                disabled={isCompletingJourney || isCardsLoading}
               >
-                {isCompletingJourney ? 'Completing...' : 'Mark Journey Complete'}
+                {isCompletingJourney
+                  ? 'Completing...'
+                  : isCardsLoading
+                    ? 'Loading Card...'
+                    : 'Mark Journey Complete'}
               </button>
             </div>
           </>

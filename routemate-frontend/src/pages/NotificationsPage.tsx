@@ -1,4 +1,5 @@
 import {
+  Alert01Icon,
   CheckmarkCircle02Icon,
   ClockArrowDownIcon,
   InformationCircleIcon,
@@ -9,7 +10,7 @@ import { PageTopBar } from '@/components/common/PageTopBar';
 import { readStoredUser } from '@/lib/authStorage';
 import { getNotifications, type NotificationRecord } from '@/lib/notificationApi';
 
-type NotificationTone = 'information' | 'complete' | 'clock';
+type NotificationTone = 'information' | 'complete' | 'clock' | 'warning';
 
 interface NotificationItem extends NotificationRecord {
   tone: NotificationTone;
@@ -19,6 +20,7 @@ const notificationIcons = {
   information: InformationCircleIcon,
   complete: CheckmarkCircle02Icon,
   clock: ClockArrowDownIcon,
+  warning: Alert01Icon,
 } as const;
 
 function getNotificationTone(type: string): NotificationTone {
@@ -31,6 +33,10 @@ function getNotificationTone(type: string): NotificationTone {
   }
 
   if (type === 'card_topup_failed' || type === 'card_deduction_failed') {
+    if (type === 'card_deduction_failed') {
+      return 'warning';
+    }
+
     return 'information';
   }
 
