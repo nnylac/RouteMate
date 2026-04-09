@@ -1,10 +1,10 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client, TravelMode } from '@googlemaps/google-maps-services-js';
-import * as dotenv from 'dotenv';
-import * as path from 'path';
-
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 type RouteStep = {
   travel_mode: string;
@@ -33,39 +33,95 @@ type RouteStep = {
 
 type GoogleMapsErrorResponse = {
   response?: {
-    data?: unknown;
+    data?: {
+      status?: string;
+      [key: string]: unknown;
+    };
   };
 };
 
 @Injectable()
-export class MapsWrapperServiceService {
+export class MapsWrapperService {
   private client: Client;
 
   constructor(private configService: ConfigService) {
     this.client = new Client({});
   }
 
+  private normalizePlaceQuery(place: string) {
+    const trimmedPlace = place.trim();
+
+    if (!trimmedPlace) {
+      return trimmedPlace;
+    }
+
+    if (/singapore/i.test(trimmedPlace)) {
+      return trimmedPlace;
+    }
+
+    return `${trimmedPlace}, Singapore`;
+  }
+
+  private async getDirectionsWithFallback(
+    apiKey: string,
+    origin: string,
+    destination: string,
+    mode: TravelMode,
+    alternatives: boolean,
+  ) {
+    try {
+      return await this.client.directions({
+        params: {
+          origin,
+          destination,
+          mode,
+          alternatives,
+          key: apiKey,
+        },
+      });
+    } catch (error: unknown) {
+      const errorWithResponse = error as GoogleMapsErrorResponse;
+      const googleStatus = errorWithResponse.response?.data?.status;
+
+      if (googleStatus !== 'NOT_FOUND') {
+        throw error;
+      }
+
+      return this.client.directions({
+        params: {
+          origin: this.normalizePlaceQuery(origin),
+          destination: this.normalizePlaceQuery(destination),
+          mode,
+          alternatives,
+          key: apiKey,
+        },
+      });
+    }
+  }
+
   async getRoutes(origin: string, destination: string) {
-    const apiKey = process.env.GOOGLE_MAPS_API_KEY!;
+    if (!origin || !destination) {
+      throw new BadRequestException('Both origin and destination are required');
+    }
+
+    const apiKey = this.configService.get<string>('GOOGLE_MAPS_API_KEY');
 
     if (!apiKey) {
       throw new InternalServerErrorException('Missing GOOGLE_MAPS_API_KEY');
     }
 
     try {
-      const response = await this.client.directions({
-        params: {
-          origin,
-          destination,
-          mode: TravelMode.transit,
-          alternatives: true,
-          key: apiKey,
-        },
-      });
+      const response = await this.getDirectionsWithFallback(
+        apiKey,
+        origin,
+        destination,
+        TravelMode.transit,
+        true,
+      );
 
       const routes = response.data.routes;
 
-      const options = routes.map((route, optionIndex) => {
+      const transitOptions = routes.map((route, optionIndex) => {
         const leg = route.legs[0];
         const steps = (leg.steps ?? []) as RouteStep[];
 
@@ -113,17 +169,61 @@ export class MapsWrapperServiceService {
         };
       });
 
+      const drivingResponse = await this.getDirectionsWithFallback(
+        apiKey,
+        origin,
+        destination,
+        TravelMode.driving,
+        false,
+      );
+      const drivingRoute = drivingResponse.data.routes[0];
+      const drivingLeg = drivingRoute?.legs?.[0];
+
+      const driving_option = drivingLeg
+        ? {
+            option_id: routes.length + 1,
+            total_duration_mins: Math.round(drivingLeg.duration.value / 60),
+            total_distance_km: parseFloat(
+              (drivingLeg.distance.value / 1000).toFixed(2),
+            ),
+            summary: drivingRoute.summary || 'Driving',
+            transfer_count: 0,
+            main_mode: 'DRIVING',
+            is_public_transport: false,
+            segments: [
+              {
+                mode: 'DRIVING',
+                from_stop: null,
+                to_stop: null,
+                duration_mins: Math.round(drivingLeg.duration.value / 60),
+                distance_km: parseFloat(
+                  (drivingLeg.distance.value / 1000).toFixed(2),
+                ),
+                line_or_service: null,
+                segment_order: 1,
+              },
+            ],
+          }
+        : null;
+
+      const options = driving_option
+        ? [...transitOptions, driving_option]
+        : transitOptions;
+
       return {
         origin_label: origin,
         destination_label: destination,
         options,
+        driving_option,
       };
     } catch (error: unknown) {
       const errorWithResponse = error as GoogleMapsErrorResponse;
+
       console.error(
         'Google Maps API error:',
         JSON.stringify(errorWithResponse?.response?.data ?? error, null, 2),
       );
+
       throw new InternalServerErrorException(
         'Failed to fetch routes from Google Maps',
       );

@@ -16,21 +16,40 @@ export class RideHailingWrapperServiceService {
 
   private readonly MOCK_API_URL = 'http://localhost:4000/quotes';
 
+  private normalizeLocation(value: string) {
+    return value.trim().toLowerCase();
+  }
+
+  private isLocationMatch(input: string, candidate: string) {
+    const normalizedInput = this.normalizeLocation(input);
+    const normalizedCandidate = this.normalizeLocation(candidate);
+
+    return (
+      normalizedInput === normalizedCandidate ||
+      normalizedCandidate.includes(normalizedInput) ||
+      normalizedInput.includes(normalizedCandidate)
+    );
+  }
+
   async getQuoteFromMock(
     provider: string,
     origin: string,
     destination: string,
   ): Promise<RideQuote> {
-    // 1. Fetch data from the mock server
+    // 1. Fetch all quote entries from the mock server
     const { data } = await firstValueFrom(
-      this.httpService.get<any[]>(this.MOCK_API_URL, {
-        params: { origin, destination },
-      }),
+      this.httpService.get<any[]>(this.MOCK_API_URL),
     );
 
-    // 2. Validate that we actually got a route back
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const routeData = data[0];
+    // 2. Try exact-ish / partial matching on origin and destination
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    const routeData = data.find(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      (route: any) =>
+        this.isLocationMatch(origin, route.origin) &&
+        this.isLocationMatch(destination, route.destination),
+    );
+
     if (!routeData) {
       throw new Error(
         `Route from ${origin} to ${destination} not found in mock data`,

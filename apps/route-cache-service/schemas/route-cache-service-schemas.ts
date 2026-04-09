@@ -38,6 +38,90 @@ export class RouteSegment {
 export const RouteSegmentSchema = SchemaFactory.createForClass(RouteSegment);
 
 @Schema({ _id: false })
+export class SegmentFareAmount {
+  @Prop({ required: true, min: 0 })
+  incremental: number;
+
+  @Prop({ required: true, min: 0 })
+  cumulative: number;
+}
+
+export const SegmentFareAmountSchema =
+  SchemaFactory.createForClass(SegmentFareAmount);
+
+@Schema({ _id: false })
+export class SegmentFareAmounts {
+  @Prop({ type: SegmentFareAmountSchema, required: true })
+  adult_card: SegmentFareAmount;
+
+  @Prop({ type: SegmentFareAmountSchema, required: true })
+  student_card: SegmentFareAmount;
+
+  @Prop({ type: SegmentFareAmountSchema, required: true })
+  senior_card: SegmentFareAmount;
+}
+
+export const SegmentFareAmountsSchema =
+  SchemaFactory.createForClass(SegmentFareAmounts);
+
+@Schema({ _id: false })
+export class RouteOptionFareSegment {
+  @Prop({ required: true })
+  segment_id: number;
+
+  @Prop({ required: true })
+  segment_order: number;
+
+  @Prop({ required: true, enum: ['BUS', 'MRT'] })
+  mode: 'BUS' | 'MRT';
+
+  @Prop({ type: String, default: null })
+  line_or_service?: string | null;
+
+  @Prop({ required: true, min: 0 })
+  distance_km: number;
+
+  @Prop({ required: true, min: 0 })
+  cumulative_distance_km: number;
+
+  @Prop({ type: String, required: true, enum: ['trunk_bus', 'mrt_lrt'] })
+  fare_basis_mode: string;
+
+  @Prop({ type: SegmentFareAmountsSchema, required: true })
+  fares: SegmentFareAmounts;
+}
+
+export const RouteOptionFareSegmentSchema = SchemaFactory.createForClass(
+  RouteOptionFareSegment,
+);
+
+@Schema({ _id: false })
+export class RouteOptionFares {
+  @Prop({ type: String, enum: ['trunk_bus', 'mrt_lrt'], default: null })
+  fare_basis_mode?: string | null;
+
+  @Prop({
+    type: {
+      adult_card: { type: Number, required: true, min: 0 },
+      student_card: { type: Number, required: true, min: 0 },
+      senior_card: { type: Number, required: true, min: 0 },
+    },
+    required: true,
+  })
+  totals: {
+    adult_card: number;
+    student_card: number;
+    senior_card: number;
+  };
+
+  @Prop({ type: [RouteOptionFareSegmentSchema], default: [] })
+  segments: RouteOptionFareSegment[];
+}
+
+export const RouteOptionFaresSchema =
+  SchemaFactory.createForClass(RouteOptionFares);
+
+@Schema({ _id: false })
 export class RouteOption {
   @Prop({ required: true })
   option_id: number;
@@ -60,6 +144,12 @@ export class RouteOption {
   @Prop({ required: true, default: true })
   is_public_transport: boolean;
 
+  @Prop({ min: 0 })
+  fare?: number;
+
+  @Prop({ type: RouteOptionFaresSchema })
+  fares?: RouteOptionFares;
+
   @Prop({ type: [RouteSegmentSchema], default: [] })
   segments: RouteSegment[];
 }
@@ -74,7 +164,7 @@ export const RouteOptionSchema = SchemaFactory.createForClass(RouteOption);
   },
 })
 export class RouteCache {
-  @Prop({ required: true, unique: true, index: true })
+  @Prop({ required: true, index: true })
   route_id: number;
 
   @Prop({ required: true, index: true })
@@ -118,3 +208,4 @@ RouteCacheSchema.index({ expires_at: 1 }, { expireAfterSeconds: 0 });
 // helpful indexes
 RouteCacheSchema.index({ user_id: 1, created_at: -1 });
 RouteCacheSchema.index({ origin_label: 1, destination_label: 1 });
+RouteCacheSchema.index({ user_id: 1, route_id: 1 }, { unique: true });

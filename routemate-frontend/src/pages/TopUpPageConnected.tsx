@@ -1,0 +1,362 @@
+import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import applePayLogo from '@/assets/payment-logos/apple-pay.svg';
+import dbsPaylahLogo from '@/assets/payment-logos/dbs-paylah.svg';
+import stripeLogo from '@/assets/payment-logos/stripe.svg';
+import { PageTopBar } from '@/components/common/PageTopBar';
+import { TopUpCardPreview } from '@/components/common/TopUpCardPreview';
+import { useCards } from '@/context/CardContext';
+import { readStoredUser } from '@/lib/authStorage';
+import {
+  createTransactionRequest,
+  updateTransactionStatusRequest,
+} from '@/lib/cardApi';
+import {
+  confirmPaymentIntent,
+  createPaymentIntent,
+  createRefund,
+} from '@/lib/paymentApi';
+import {
+  saveTransactionMetadata,
+  updateTransactionMetadataStatus,
+} from '@/lib/transactionHistoryStorage';
+
+const amounts = [10, 20, 30, 50, 100];
+
+const paymentOptions = [
+  { id: 'stripe', label: 'Stripe', logo: stripeLogo, available: true, selected: true },
+  { id: 'paylah', label: 'DBS PayLah!', logo: dbsPaylahLogo, available: false, selected: false },
+  { id: 'apple-pay', label: 'Apple Pay', logo: applePayLogo, available: false, selected: false },
+];
+
+function parseTopUpAmount(value: string) {
+  if (!value || value === '.') {
+    return null;
+  }
+
+  const parsedAmount = Number(value);
+  return Number.isFinite(parsedAmount) ? parsedAmount : null;
+}
+
+export function TopUpPageConnected() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { cards, topUpCard } = useCards();
+  const [amount, setAmount] = useState('10');
+  const [amountError, setAmountError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const selectedCardId =
+    typeof location.state === 'object' &&
+    location.state !== null &&
+    'cardId' in location.state &&
+    typeof location.state.cardId === 'string'
+      ? location.state.cardId
+      : null;
+  const currentCard = cards.find((card) => card.id === selectedCardId) ?? cards[0];
+
+  function handleAmountChange(nextValue: string) {
+    if (/^\d*(\.\d{0,2})?$/.test(nextValue)) {
+      setAmount(nextValue);
+      setAmountError(nextValue ? '' : 'Please enter a top up amount.');
+      return;
+    }
+
+    setAmountError('Enter a valid amount with up to 2 decimal places.');
+  }
+
+  function handlePresetClick(nextAmount: number) {
+    setAmount(String(nextAmount));
+    setAmountError('');
+  }
+
+  async function handleTopUp() {
+    if (!currentCard) {
+      setAmountError('Create a card before topping up.');
+      return;
+    }
+
+    if (!amount) {
+      setAmountError('Please enter a top up amount.');
+      return;
+    }
+
+    const parsedAmount = parseTopUpAmount(amount);
+
+    if (parsedAmount === null || parsedAmount <= 0) {
+      setAmountError('Top up amount must be more than 0.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    let transactionId: number | null = null;
+    let paymentSucceeded = false;
+    let cardBalanceUpdated = false;
+    let transactionSyncWarning = false;
+    let paymentIntentId: string | null = null;
+    let transactionUserId: string | number | null = null;
+    let appUserId: string | null = null;
+
+    try {
+      const storedUser = readStoredUser();
+
+      if (!storedUser) {
+        throw new Error('No signed-in user found. Please log in again.');
+      }
+
+      appUserId = storedUser.id;
+
+      if (!storedUser.transactionUserId) {
+        throw new Error('No signed-in user ID found for this account. Please log in again.');
+      }
+
+      const userId = storedUser.transactionUserId;
+      transactionUserId = userId;
+
+      try {
+        const transaction = await createTransactionRequest({
+          userId,
+          cardId: currentCard.id,
+          amount: parsedAmount,
+          transactionType: 'top_up',
+          status: 'pending',
+        });
+
+        if (transaction.Id && transaction.Id > 0) {
+          transactionId = transaction.Id;
+          saveTransactionMetadata({
+            transactionId: transaction.Id,
+            cardId: currentCard.id,
+            category: 'Top Up',
+            title: 'Top Up',
+            route: 'Card top up',
+            status: 'pending',
+          });
+        } else {
+          transactionSyncWarning = true;
+        }
+      } catch {
+        transactionSyncWarning = true;
+      }
+
+      const paymentIntent = await createPaymentIntent({
+        amount: parsedAmount,
+        currency: 'sgd',
+        metadata: {
+          userId: String(userId),
+          cardId: currentCard.id,
+          transactionId: transactionId !== null ? String(transactionId) : 'pending-sync',
+        },
+      });
+      paymentIntentId = paymentIntent.paymentIntentId;
+
+      const confirmation = await confirmPaymentIntent({
+        paymentIntentId: paymentIntent.paymentIntentId,
+        paymentMethod: 'pm_card_visa',
+      });
+
+      if (confirmation.status !== 'succeeded') {
+        throw new Error(`Payment failed with status: ${confirmation.status}`);
+      }
+      paymentSucceeded = true;
+      const updatedCard = await topUpCard(currentCard.id, parsedAmount);
+      cardBalanceUpdated = true;
+
+      if (transactionId !== null) {
+        try {
+          await updateTransactionStatusRequest(transactionId, {
+            status: 'success',
+            transactionType: 'top_up',
+            cardId: currentCard.id,
+            userId: appUserId ?? userId,
+            amount: parsedAmount,
+            balance: updatedCard.balance,
+          });
+          updateTransactionMetadataStatus(transactionId, 'success');
+        } catch {
+          transactionSyncWarning = true;
+        }
+      }
+
+      navigate('/top-up-success', {
+        state: {
+          cardId: currentCard.id,
+          transactionWarning: transactionSyncWarning
+            ? 'Top-up succeeded, but transaction status could not be synced.'
+            : undefined,
+        },
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to top up card.';
+
+      if (paymentSucceeded && !cardBalanceUpdated && paymentIntentId) {
+        try {
+          const refund = await createRefund({
+            paymentIntentId,
+            amount: parsedAmount,
+          });
+
+          if (refund.status !== 'succeeded') {
+            throw new Error(`Refund failed with status: ${refund.status}`);
+          }
+
+          if (transactionId !== null) {
+            try {
+              await updateTransactionStatusRequest(transactionId, {
+                status: 'rolled_back',
+                failureReason: message,
+                transactionType: 'top_up',
+                cardId: currentCard.id,
+                userId: appUserId ?? transactionUserId ?? '',
+                amount: parsedAmount,
+              });
+              updateTransactionMetadataStatus(transactionId, 'rolled_back');
+            } catch {
+              // Keep the original refund/callback error visible if transaction patch fails.
+            }
+          }
+
+          setAmountError('Top-up could not be applied to your card. Your Stripe payment was refunded.');
+          return;
+        } catch (refundError) {
+          const refundMessage =
+            refundError instanceof Error
+              ? refundError.message
+              : 'Payment succeeded, but refund failed.';
+
+          if (transactionId !== null) {
+            try {
+              await updateTransactionStatusRequest(transactionId, {
+                status: 'failed',
+                failureReason: `${message} Refund error: ${refundMessage}`,
+                transactionType: 'top_up',
+                cardId: currentCard.id,
+                userId: appUserId ?? transactionUserId ?? '',
+                amount: parsedAmount,
+              });
+              updateTransactionMetadataStatus(transactionId, 'failed');
+            } catch {
+              // Keep the original refund failure visible if transaction patch fails.
+            }
+          }
+
+          setAmountError(`Payment was charged, but refund failed. ${refundMessage}`);
+          return;
+        }
+      }
+
+      if (transactionId !== null) {
+        try {
+          await updateTransactionStatusRequest(transactionId, {
+            status: 'failed',
+            failureReason: message,
+            transactionType: 'top_up',
+            cardId: currentCard.id,
+            userId: appUserId ?? transactionUserId ?? '',
+            amount: parsedAmount,
+          });
+          updateTransactionMetadataStatus(transactionId, 'failed');
+        } catch {
+          // Keep the original top-up error visible if transaction patch fails.
+        }
+      }
+      setAmountError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  const selectedAmount = parseTopUpAmount(amount);
+
+  return (
+    <div className="page">
+      <PageTopBar showBack />
+      {currentCard ? <TopUpCardPreview card={currentCard} /> : null}
+
+      {!currentCard ? (
+        <section className="empty-state page-section">
+          <h2 className="section-title">No card found</h2>
+          <p className="section-subtitle">Create a card first before topping up.</p>
+          <button type="button" className="primary-button primary-button--pill" onClick={() => navigate('/cards/add')}>
+            Add Card
+          </button>
+        </section>
+      ) : null}
+
+      {currentCard ? (
+        <section className="top-up-section">
+          <h2 className="section-title section-title--center">Top Up Amount</h2>
+
+          <label className="amount-input" htmlFor="top-up-amount">
+            <span>$</span>
+            <input
+              id="top-up-amount"
+              className={`amount-box amount-box-input ${amountError ? 'amount-box-input--error' : ''}`}
+              type="text"
+              inputMode="numeric"
+              value={amount}
+              onChange={(event) => handleAmountChange(event.target.value)}
+              aria-invalid={amountError ? 'true' : 'false'}
+              aria-describedby={amountError ? 'top-up-amount-error' : undefined}
+            />
+          </label>
+
+          {amountError ? (
+            <div id="top-up-amount-error" className="amount-error" role="alert">
+              {amountError}
+            </div>
+          ) : null}
+
+          <div className="preset-row">
+            {amounts.map((presetAmount) => (
+              <button
+                key={presetAmount}
+                type="button"
+                className={`preset-chip ${amount === String(presetAmount) ? 'preset-chip--active' : ''}`}
+                onClick={() => handlePresetClick(presetAmount)}
+              >
+                $ {presetAmount.toFixed(2)}
+              </button>
+            ))}
+          </div>
+
+          <h3 className="payment-heading">Select Payment</h3>
+
+          <div className="payment-list">
+            {paymentOptions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                className={[
+                  'payment-option',
+                  option.selected ? 'payment-option--selected' : '',
+                  !option.available ? 'payment-option--disabled' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                disabled={!option.available}
+              >
+                <span className={`payment-option__radio ${option.selected ? 'payment-option__radio--selected' : ''}`} />
+                <img src={option.logo} alt={`${option.label} logo`} className="payment-option__logo" />
+                <span className="payment-option__label">
+                  {option.label}
+                  {!option.available ? ' (Not available)' : ''}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <button
+        type="button"
+        className="success-button"
+        onClick={() => void handleTopUp()}
+        disabled={!currentCard || isSubmitting}
+      >
+        <span>Top Up</span>
+        <span>{selectedAmount !== null ? `$ ${selectedAmount.toFixed(2)}` : '$ --'}</span>
+        <span>&rarr;</span>
+      </button>
+    </div>
+  );
+}

@@ -12,7 +12,7 @@ import { CreateCardDto } from './dto/create-card.dto';
 export class CardService {
   constructor(
     @InjectModel(Card.name)
-    private readonly cardModel: Model<CardDocument>,
+    private readonly cardModel: Model<Card>,
   ) {}
 
   getHello(): string {
@@ -24,8 +24,9 @@ export class CardService {
     let cardNumber = '';
 
     while (exists) {
-      const randomDigits = Math.floor(10000000 + Math.random() * 90000000);
-      cardNumber = `CARD${randomDigits}`;
+      cardNumber = Array.from({ length: 16 }, () =>
+        Math.floor(Math.random() * 10).toString(),
+      ).join('');
 
       const existingCard = await this.cardModel.findOne({ cardNumber }).exec();
       exists = !!existingCard;
@@ -37,14 +38,14 @@ export class CardService {
   async createCard(createCardDto: CreateCardDto): Promise<CardDocument> {
     const cardNumber = await this.generateUniqueCardNumber();
 
-    const card = new this.cardModel({
+    const card = await this.cardModel.create({
       ...createCardDto,
       cardNumber,
       balance: 0,
       status: 'active',
     });
 
-    return card.save();
+    return card;
   }
 
   async getAllCards(): Promise<CardDocument[]> {

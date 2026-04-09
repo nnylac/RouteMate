@@ -14,6 +14,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
 
@@ -209,5 +210,41 @@ export class UserService {
     await user.save();
 
     return { message: 'Password changed successfully' };
+  }
+
+  async forgotPassword(
+    forgotPasswordDto: ForgotPasswordDto,
+  ): Promise<{ message: string }> {
+    const normalizedIdentity = forgotPasswordDto.usernameOrEmail.trim();
+
+    const user = await this.userModel
+      .findOne({
+        $or: [
+          { email: normalizedIdentity.toLowerCase() },
+          { username: normalizedIdentity },
+        ],
+      })
+      .select('+passwordHash')
+      .exec();
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const isSamePassword = await bcrypt.compare(
+      forgotPasswordDto.newPassword,
+      user.passwordHash,
+    );
+
+    if (isSamePassword) {
+      throw new BadRequestException(
+        'New password must be different from current password',
+      );
+    }
+
+    user.passwordHash = await bcrypt.hash(forgotPasswordDto.newPassword, 10);
+    await user.save();
+
+    return { message: 'Password reset successfully' };
   }
 }

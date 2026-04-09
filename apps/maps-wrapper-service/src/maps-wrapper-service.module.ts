@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MapsWrapperServiceController } from './maps-wrapper-service.controller';
-import { MapsWrapperServiceService } from './maps-wrapper-service.service';
+import { MapsWrapperService } from './maps-wrapper-service.service';
 
 @Module({
   imports: [
@@ -10,6 +10,6 @@ import { MapsWrapperServiceService } from './maps-wrapper-service.service';
     }),
   ],
   controllers: [MapsWrapperServiceController],
-  providers: [MapsWrapperServiceService],
+  providers: [MapsWrapperService],
 })
 export class MapsWrapperServiceModule {}

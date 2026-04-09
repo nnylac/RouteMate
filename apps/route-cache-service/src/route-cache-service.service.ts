@@ -37,11 +37,15 @@ export class RouteCacheService {
   }
 
   async saveRouteCache(body: Partial<RouteCache>) {
+    if (body.user_id == null || body.route_id == null) {
+      throw new BadRequestException('user_id and route_id are required');
+    }
+
     return this.routeCacheModel.findOneAndUpdate(
-      { route_id: body.route_id },
+      { user_id: body.user_id, route_id: body.route_id },
       body,
       {
-        new: true,
+        returnDocument: 'after',
         upsert: true,
         runValidators: true,
       },

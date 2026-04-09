@@ -13,8 +13,6 @@ import {
   TransactionStatus,
   VALID_TRANSITIONS,
 } from './enums/transaction-status.enum';
-import { TransactionType } from './enums/transaction-type.enum';
-import { RabbitMQPublisher } from './publisher/rabbitmq.publisher';
 
 @Injectable()
 export class TransactionService {
@@ -22,7 +20,6 @@ export class TransactionService {
     @InjectRepository(Transaction)
     private readonly transactionRepository: Repository<Transaction>,
     private readonly dataSource: DataSource,
-    private readonly publisher: RabbitMQPublisher,
   ) {}
 
   // ─── Create (always starts PENDING) ────────────────────────────────────────
@@ -66,17 +63,6 @@ export class TransactionService {
     }
 
     const saved = await this.transactionRepository.save(transaction);
-
-    // Publish AMQP event for TOP_UP transactions
-    if (transaction.transactionType === TransactionType.TOP_UP) {
-      if (dto.status === TransactionStatus.SUCCESS) {
-        void this.publisher.publishTopUpSuccess(saved);
-      } else if (dto.status === TransactionStatus.FAILED) {
-        void this.publisher.publishTopUpFailed(saved);
-      } else if (dto.status === TransactionStatus.ROLLED_BACK) {
-        void this.publisher.publishTopUpRolledBack(saved);
-      }
-    }
 
     return saved;
   }
