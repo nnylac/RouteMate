@@ -75,6 +75,7 @@ export function FareComparisonPage() {
   const [showCheapestDetails, setShowCheapestDetails] = useState(false);
   const [showFastestDetails, setShowFastestDetails] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const hasComparison = comparison !== null;
 
   useEffect(() => {
     const parsedRouteId = requestedRouteId ? Number(requestedRouteId) : NaN;
@@ -129,11 +130,6 @@ export function FareComparisonPage() {
     async function loadFareComparisonData() {
       if (!isCancelled) {
         setIsLoading(true);
-        setComparison(null);
-        setBusDuration(null);
-        setRideDuration(null);
-        setShowCheapestDetails(false);
-        setShowFastestDetails(false);
       }
 
       const compareResult = await compareFaresRequest(routeId, paxCount)
@@ -223,13 +219,15 @@ export function FareComparisonPage() {
       />
 
       <div className="stack-md fare-comparison-page">
-        {isLoading ? <div className="empty-state">Loading fare comparison...</div> : null}
+        {isLoading && !hasComparison ? (
+          <div className="empty-state">Loading fare comparison...</div>
+        ) : null}
 
         {!isLoading && (!origin.trim() || !destination.trim()) ? (
           <div className="empty-state">Enter both origin and destination to compare fares.</div>
         ) : null}
 
-        {!isLoading && origin.trim() && destination.trim() ? (
+        {origin.trim() && destination.trim() ? (
           <>
             <div className="fare-comparison-header">
               <h2 className="fare-comparison-title">Fare Comparison</h2>

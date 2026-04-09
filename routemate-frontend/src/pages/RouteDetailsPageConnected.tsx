@@ -37,6 +37,17 @@ function formatDurationSummary(minutes: number) {
   return `${minutes} min`;
 }
 
+function getCurrentSingaporeTimeLabel() {
+  const formatter = new Intl.DateTimeFormat('en-SG', {
+    timeZone: 'Asia/Singapore',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  return formatter.format(new Date()).toUpperCase();
+}
+
 function getHeaderBadges(option: DetailedRouteOption): RouteBadge[] {
   if (option.badges.length <= 4) {
     return option.badges;
@@ -158,6 +169,7 @@ export function RouteDetailsPageConnected() {
   const [isLoading, setIsLoading] = useState(true);
   const [expandedCardIds, setExpandedCardIds] = useState<string[]>([]);
   const { isBookmarked, toggleBookmark } = useBookmarkedRoutes();
+  const currentSingaporeTimeLabel = useMemo(() => getCurrentSingaporeTimeLabel(), []);
 
   useEffect(() => {
     let isCancelled = false;
@@ -252,7 +264,7 @@ export function RouteDetailsPageConnected() {
             </span>
           ))}
           <span className="route-header-inline__separator">·</span>
-          <span>4:40 PM</span>
+          <span>{currentSingaporeTimeLabel}</span>
           <span className="route-header-inline__separator">·</span>
           <button
             className={`bookmark-button ${bookmarked ? 'bookmark-button--active' : ''}`}

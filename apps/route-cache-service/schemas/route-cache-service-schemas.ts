@@ -164,7 +164,7 @@ export const RouteOptionSchema = SchemaFactory.createForClass(RouteOption);
   },
 })
 export class RouteCache {
-  @Prop({ required: true, unique: true, index: true })
+  @Prop({ required: true, index: true })
   route_id: number;
 
   @Prop({ required: true, index: true })
@@ -208,3 +208,4 @@ RouteCacheSchema.index({ expires_at: 1 }, { expireAfterSeconds: 0 });
 // helpful indexes
 RouteCacheSchema.index({ user_id: 1, created_at: -1 });
 RouteCacheSchema.index({ origin_label: 1, destination_label: 1 });
+RouteCacheSchema.index({ user_id: 1, route_id: 1 }, { unique: true });

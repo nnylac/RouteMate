@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { readStoredUser } from '@/lib/authStorage';
 import type { SavedRoute } from '@/types';
 
 const STORAGE_KEY = 'routemate-bookmarked-routes';
@@ -26,13 +27,18 @@ function isSavedRoute(value: unknown): value is SavedRoute {
   );
 }
 
-function readBookmarks() {
+function getBookmarkStorageKey() {
+  const storedUser = readStoredUser();
+  return storedUser ? `${STORAGE_KEY}:${storedUser.id}` : STORAGE_KEY;
+}
+
+function readBookmarks(storageKey = getBookmarkStorageKey()) {
   if (typeof window === 'undefined') {
     return [] as BookmarkEntry[];
   }
 
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(storageKey);
     if (!raw) {
       return [];
     }
@@ -68,36 +74,38 @@ function readBookmarks() {
   }
 }
 
-function writeBookmarks(bookmarks: BookmarkEntry[]) {
+function writeBookmarks(bookmarks: BookmarkEntry[], storageKey = getBookmarkStorageKey()) {
   if (typeof window === 'undefined') {
     return;
   }
 
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(bookmarks));
+  window.localStorage.setItem(storageKey, JSON.stringify(bookmarks));
   window.dispatchEvent(new CustomEvent(STORAGE_EVENT));
 }
 
 export function useBookmarkedRoutes() {
-  const [bookmarkEntries, setBookmarkEntries] = useState<BookmarkEntry[]>(() => readBookmarks());
+  const storageKey = useMemo(() => getBookmarkStorageKey(), []);
+  const [bookmarkEntries, setBookmarkEntries] = useState<BookmarkEntry[]>(() => readBookmarks(storageKey));
 
   useEffect(() => {
     function syncBookmarks(event?: StorageEvent) {
-      if (!event || event.key === STORAGE_KEY) {
-        setBookmarkEntries(readBookmarks());
+      if (!event || event.key === storageKey) {
+        setBookmarkEntries(readBookmarks(storageKey));
       }
     }
 
     function handleBookmarkEvent() {
-      setBookmarkEntries(readBookmarks());
+      setBookmarkEntries(readBookmarks(storageKey));
     }
 
     window.addEventListener('storage', syncBookmarks);
     window.addEventListener(STORAGE_EVENT, handleBookmarkEvent);
+    setBookmarkEntries(readBookmarks(storageKey));
     return () => {
       window.removeEventListener('storage', syncBookmarks);
       window.removeEventListener(STORAGE_EVENT, handleBookmarkEvent);
     };
-  }, []);
+  }, [storageKey]);
 
   const bookmarks = useMemo(
     () => bookmarkEntries.map((entry) => entry.key),
@@ -126,7 +134,7 @@ export function useBookmarkedRoutes() {
           ? current.filter((entry) => entry.key !== routeKey)
           : [...current, { key: routeKey, route }];
 
-      writeBookmarks(next);
+      writeBookmarks(next, storageKey);
       return next;
     });
   }

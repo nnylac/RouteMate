@@ -1849,6 +1849,7 @@ a {
 
 .fare-comparison-page {
   padding-bottom: 28px;
+  overflow-anchor: none;
 }
 
 .fare-comparison-header {
