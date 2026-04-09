@@ -9,19 +9,19 @@ export type NotificationDocument = HydratedDocument<Notification>;
 })
 export class Notification {
   @Prop({ required: true, trim: true })
-  userId: string;
+  userId!: string;
 
   @Prop({ required: true, trim: true })
-  type: string;
+  type!: string;
 
   @Prop({ required: true, trim: true })
-  title: string;
+  title!: string;
 
   @Prop({ required: true, trim: true })
-  message: string;
+  message!: string;
 
   @Prop({ required: true, default: false })
-  isRead: boolean;
+  isRead!: boolean;
 }
 
 export const NotificationSchema = SchemaFactory.createForClass(Notification);

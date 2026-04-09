@@ -22,28 +22,11 @@ export class NotificationService {
       message: 'Your card balance has fallen below the threshold.',
       isRead: false,
     });
+
     return notification.save();
   }
 
   async getAllNotifications(): Promise<Notification[]> {
     return this.notificationModel.find().exec();
-  }
-
-  // Called by HTTP and RabbitMQ consumer
-  async createNotification(data: {
-    userId: string;
-    type: string;
-    title: string;
-    message: string;
-    isRead?: boolean;
-  }): Promise<Notification> {
-    const notification = new this.notificationModel({
-      userId: data.userId,
-      type: data.type,
-      title: data.title,
-      message: data.message,
-      isRead: data.isRead ?? false,
-    });
-    return notification.save();
   }
 }

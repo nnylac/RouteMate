@@ -18,18 +18,7 @@ returns: notification service is running
   "createdAt": "2026-03-18T10:08:10.094Z",
   "updatedAt": "2026-03-18T10:08:10.094Z",
   "__v": 0
-}```{
-  "userId": "user_001",
-  "type": "card_low_balance",
-  "title": "Low Card Balance",
-  "message": "Your card balance has fallen below the threshold.",
-  "isRead": false,
-  "_id": "69ba798a942280f5afc04ca7",
-  "createdAt": "2026-03-18T10:08:10.094Z",
-  "updatedAt": "2026-03-18T10:08:10.094Z",
-  "__v": 0
-}
-```
+}```
 
 3. retrieve results
 ```GET http://localhost:3006/notification-service/notifications```
@@ -48,3 +37,11 @@ returns: notification service is running
     "__v": 0
   }
 ]```
+4. RabbitMQ consumer
+When notification-service starts, it also starts a RabbitMQ consumer.
+
+It listens for:
+```bash
+card.topup.success
+card.topup.failed
+card.topup.rollback
