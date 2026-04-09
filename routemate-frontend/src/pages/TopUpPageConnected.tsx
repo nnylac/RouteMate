@@ -14,6 +14,7 @@ import {
 import {
   confirmPaymentIntent,
   createPaymentIntent,
+  createRefund,
 } from '@/lib/paymentApi';
 import { saveTransactionMetadata } from '@/lib/transactionHistoryStorage';
 
@@ -86,7 +87,10 @@ export function TopUpPageConnected() {
     setIsSubmitting(true);
     let transactionId: number | null = null;
     let paymentSucceeded = false;
+    let cardBalanceUpdated = false;
     let transactionSyncWarning = false;
+    let paymentIntentId: string | null = null;
+    let transactionUserId: string | number | null = null;
 
     try {
       const storedUser = readStoredUser();
@@ -100,6 +104,7 @@ export function TopUpPageConnected() {
       }
 
       const userId = storedUser.transactionUserId;
+      transactionUserId = userId;
 
       try {
         const transaction = await createTransactionRequest({
@@ -135,6 +140,7 @@ export function TopUpPageConnected() {
           transactionId: transactionId !== null ? String(transactionId) : 'pending-sync',
         },
       });
+      paymentIntentId = paymentIntent.paymentIntentId;
 
       const confirmation = await confirmPaymentIntent({
         paymentIntentId: paymentIntent.paymentIntentId,
@@ -146,11 +152,20 @@ export function TopUpPageConnected() {
       }
       paymentSucceeded = true;
       await topUpCard(currentCard.id, parsedAmount);
+      cardBalanceUpdated = true;
 
       if (transactionId !== null) {
-        await updateTransactionStatusRequest(transactionId, {
-          status: 'success',
-        });
+        try {
+          await updateTransactionStatusRequest(transactionId, {
+            status: 'success',
+            transactionType: 'top_up',
+            cardId: currentCard.id,
+            userId,
+            amount: parsedAmount,
+          });
+        } catch {
+          transactionSyncWarning = true;
+        }
       }
 
       navigate('/top-up-success', {
@@ -163,11 +178,70 @@ export function TopUpPageConnected() {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to top up card.';
+
+      if (paymentSucceeded && !cardBalanceUpdated && paymentIntentId) {
+        try {
+          const refund = await createRefund({
+            paymentIntentId,
+            amount: parsedAmount,
+          });
+
+          if (refund.status !== 'succeeded') {
+            throw new Error(`Refund failed with status: ${refund.status}`);
+          }
+
+          if (transactionId !== null) {
+            try {
+              await updateTransactionStatusRequest(transactionId, {
+                status: 'rolled_back',
+                failureReason: message,
+                transactionType: 'top_up',
+                cardId: currentCard.id,
+                userId: transactionUserId ?? '',
+                amount: parsedAmount,
+              });
+            } catch {
+              // Keep the original refund/callback error visible if transaction patch fails.
+            }
+          }
+
+          setAmountError('Top-up could not be applied to your card. Your Stripe payment was refunded.');
+          return;
+        } catch (refundError) {
+          const refundMessage =
+            refundError instanceof Error
+              ? refundError.message
+              : 'Payment succeeded, but refund failed.';
+
+          if (transactionId !== null) {
+            try {
+              await updateTransactionStatusRequest(transactionId, {
+                status: 'failed',
+                failureReason: `${message} Refund error: ${refundMessage}`,
+                transactionType: 'top_up',
+                cardId: currentCard.id,
+                userId: transactionUserId ?? '',
+                amount: parsedAmount,
+              });
+            } catch {
+              // Keep the original refund failure visible if transaction patch fails.
+            }
+          }
+
+          setAmountError(`Payment was charged, but refund failed. ${refundMessage}`);
+          return;
+        }
+      }
+
       if (transactionId !== null) {
         try {
           await updateTransactionStatusRequest(transactionId, {
-            status: paymentSucceeded ? 'rolled_back' : 'failed',
+            status: 'failed',
             failureReason: message,
+            transactionType: 'top_up',
+            cardId: currentCard.id,
+            userId: transactionUserId ?? '',
+            amount: parsedAmount,
           });
         } catch {
           // Keep the original top-up error visible if transaction patch fails.

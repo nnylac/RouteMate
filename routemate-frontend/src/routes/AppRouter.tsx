@@ -13,6 +13,7 @@ import { CardDetailsPage } from '@/pages/CardDetailsPage';
 import { TopUpPageConnected } from '@/pages/TopUpPageConnected';
 import { TopUpSuccessPage } from '@/pages/TopUpSuccessPage';
 import { RideHailingPage } from '@/pages/RideHailingPage';
+import { FareComparisonPage } from '@/pages/FareComparisonPage';
 import { AddCardPage } from '@/pages/AddCardPage';
 import { ProfilePageConnected } from '@/pages/ProfilePageConnected';
 import { EditProfilePageConnected } from '@/pages/EditProfilePageConnected';
@@ -37,6 +38,7 @@ export function AppRouter() {
         <Route path="/top-up" element={<TopUpPageConnected />} />
         <Route path="/top-up-success" element={<TopUpSuccessPage />} />
         <Route path="/ride-hailing" element={<RideHailingPage />} />
+        <Route path="/fare-comparison" element={<FareComparisonPage />} />
         <Route path="/profile" element={<ProfilePageConnected />} />
         <Route path="/profile/edit" element={<EditProfilePageConnected />} />
       </Route>

@@ -4,6 +4,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
+import { RabbitMQPublisher } from './rabbitmq.publisher';
 
 type TransactionType = 'top_up' | 'payment' | 'refund';
 type TransactionStatus = 'pending' | 'success' | 'failed' | 'rolled_back';
@@ -29,6 +30,8 @@ export class CardOrchestratorServiceService {
   private readonly transactionApiBaseUrl =
     process.env.TRANSACTION_API_BASE_URL ??
     'https://personal-1pnhiqon.outsystemscloud.com/Payment/rest/TransactionAPI';
+
+  constructor(private readonly publisher: RabbitMQPublisher) {}
 
   getHello(): string {
     return 'Hello World!';
@@ -59,13 +62,9 @@ export class CardOrchestratorServiceService {
       throw new BadRequestException('amount must be greater than 0');
     }
 
-    const updatedCard = await this.forwardRequest(
-      'patch',
-      `/cards/${id}/topup`,
-      { amount },
-    );
-
-    return updatedCard;
+    return this.forwardRequest('patch', `/cards/${id}/topup`, {
+      amount,
+    });
   }
 
   async deductFare(id: string, amount: number) {
@@ -73,11 +72,20 @@ export class CardOrchestratorServiceService {
       throw new BadRequestException('amount must be greater than 0');
     }
 
-    return this.forwardRequest(
-      'patch',
-      `/cards/${id}/deduct`,
-      { amount },
-    );
+    const updatedCard = await this.forwardRequest('patch', `/cards/${id}/deduct`, {
+      amount,
+    });
+
+    const userId = await this.getUserIdForCard(id);
+    if (userId !== null) {
+      void this.publisher.publishDeductionSuccess({
+        cardId: id,
+        userId,
+        amount,
+      });
+    }
+
+    return updatedCard;
   }
 
   async createTransaction(body: {
@@ -149,6 +157,10 @@ export class CardOrchestratorServiceService {
     body: {
       status: TransactionStatus;
       failureReason?: string;
+      transactionType?: TransactionType;
+      cardId?: string;
+      userId?: string | number;
+      amount?: number;
     },
   ) {
     if (!transactionId) {
@@ -167,16 +179,42 @@ export class CardOrchestratorServiceService {
       );
 
       if (body.failureReason) {
-        return {
+        const responseWithFailure = {
           ...response.data,
           FailureReason: body.failureReason,
         };
+
+        this.publishStatusEvent(body.status, responseWithFailure, body);
+        return responseWithFailure;
       }
 
+      this.publishStatusEvent(body.status, response.data, body);
       return response.data;
     } catch (error) {
       throw this.toGatewayError(error, 'Unable to update transaction status');
     }
+  }
+
+  async publishTopUpFailedEvent(body: {
+    cardId: string;
+    userId: string | number;
+    amount: number;
+    failureReason?: string;
+    transactionId?: number;
+  }) {
+    await this.publisher.publishTopUpFailed(body);
+    return { success: true };
+  }
+
+  async publishTopUpRolledBackEvent(body: {
+    cardId: string;
+    userId: string | number;
+    amount: number;
+    failureReason?: string;
+    transactionId?: number;
+  }) {
+    await this.publisher.publishTopUpRolledBack(body);
+    return { success: true };
   }
 
   async getTransactionsRecords(userId: string | number, cardId: string) {
@@ -240,6 +278,77 @@ export class CardOrchestratorServiceService {
     }
 
     return error;
+  }
+
+  private async getUserIdForCard(cardId: string) {
+    try {
+      const card = await this.getCardById(cardId);
+      const userId = (card as { userId?: string | number } | null)?.userId;
+      return userId ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  private publishStatusEvent(
+    status: TransactionStatus,
+    transaction: Partial<OutsystemsTransaction>,
+    context?: {
+      transactionType?: TransactionType;
+      cardId?: string;
+      userId?: string | number;
+      amount?: number;
+      failureReason?: string;
+    },
+  ) {
+    const cardId = transaction.CardId ?? context?.cardId;
+    const userId = transaction.UserId ?? context?.userId;
+    const amount = transaction.Amount ?? context?.amount;
+    const transactionType = transaction.TransactionType ?? context?.transactionType;
+    const failureReason = transaction.FailureReason ?? context?.failureReason;
+
+    if (!cardId || userId === undefined || userId === null || typeof amount !== 'number') {
+      return;
+    }
+
+    if (transactionType !== 'top_up' && transactionType !== 'payment') {
+      return;
+    }
+
+    if (transactionType === 'top_up') {
+      if (status === 'success') {
+        void this.publisher.publishTopUpSuccess({
+          cardId,
+          userId,
+          amount,
+          transactionId: transaction.Id,
+        });
+      } else if (status === 'failed') {
+        void this.publisher.publishTopUpFailed({
+          cardId,
+          userId,
+          amount,
+          failureReason,
+          transactionId: transaction.Id,
+        });
+      } else if (status === 'rolled_back') {
+        void this.publisher.publishTopUpRolledBack({
+          cardId,
+          userId,
+          amount,
+          failureReason,
+          transactionId: transaction.Id,
+        });
+      }
+    } else if (transactionType === 'payment' && status === 'failed') {
+      void this.publisher.publishDeductionFailed({
+        cardId,
+        userId,
+        amount,
+        failureReason,
+        transactionId: transaction.Id,
+      });
+    }
   }
 
   private async forwardRequest(

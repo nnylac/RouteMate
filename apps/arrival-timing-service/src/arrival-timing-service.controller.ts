@@ -7,7 +7,7 @@ export class ArrivalTimingServiceController {
     private readonly arrivalTimingServiceService: ArrivalTimingServiceService,
   ) {}
 
-  @Get()
+  @Get('health')
   getHello(): string {
     return 'arrival timing service is running';
   }

@@ -45,3 +45,13 @@ It listens for:
 card.topup.success
 card.topup.failed
 card.topup.rollback
+card.deduction.success
+card.deduction.failed
+```
+
+exchange:
+```bash
+routemate.events
+```
+
+Incoming events are saved into MongoDB as notification documents.

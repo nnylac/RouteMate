@@ -11,19 +11,10 @@ import { CompareFareDto } from './dto/compare-fare.dto';
 
 const ROUTE_CACHE_URL =
   process.env.ROUTE_CACHE_SERVICE_URL ?? 'http://localhost:3010';
-const FARE_SERVICE_URL =
-  process.env.FARE_SERVICE_URL ?? 'http://localhost:3004';
 const RIDE_HAILING_AGGREGATOR_URL =
   process.env.RIDE_HAILING_AGGREGATOR_SERVICE_URL ?? 'http://localhost:3008';
 
-const MODE_TO_TRANSPORT: Record<string, string | null> = {
-  BUS: 'trunk_bus',
-  MRT: 'mrt_lrt',
-  LRT: 'mrt_lrt',
-  WALK: null,
-  TAXI: null,
-  RIDE_HAIL: null,
-};
+type FareCategoryKey = 'adult_card' | 'student_card' | 'senior_card';
 
 interface CachedRouteSegment {
   segment_id: number;
@@ -41,8 +32,30 @@ interface CachedRouteOption {
   total_duration_mins: number;
   total_distance_km: number;
   transfer_count: number;
+  fare?: number | null;
+  summary?: string;
   is_public_transport?: boolean;
   segments?: CachedRouteSegment[];
+  fares?: {
+    fare_basis_mode?: string | null;
+    totals: Record<FareCategoryKey, number>;
+    segments: Array<{
+      segment_id: number;
+      segment_order: number;
+      mode: 'BUS' | 'MRT';
+      line_or_service?: string | null;
+      distance_km: number;
+      cumulative_distance_km: number;
+      fare_basis_mode?: string | null;
+      fares: Record<
+        FareCategoryKey,
+        {
+          incremental: number;
+          cumulative: number;
+        }
+      >;
+    }>;
+  } | null;
 }
 
 interface CachedRoute {
@@ -51,10 +64,6 @@ interface CachedRoute {
   destination_label: string;
   selected_option_id?: number | null;
   route_options?: CachedRouteOption[];
-}
-
-interface FareServiceRule {
-  fareAmount: string | number;
 }
 
 interface FareBreakdownItem {
@@ -104,7 +113,7 @@ export class FareComparisonServiceService {
     const selectedOption = this.resolveSelectedOption(route, route_id);
     const ptResult = await this.calculatePtFare(
       selectedOption,
-      fare_category ?? 'adult_card',
+      (fare_category ?? 'adult_card') as FareCategoryKey,
     );
     const rideResult = await this.fetchRideHailingQuotes(
       route.origin_label,
@@ -135,6 +144,7 @@ export class FareComparisonServiceService {
         fare_breakdown: ptResult.breakdown,
         segments_priced: ptResult.segments_priced,
         segments_skipped: ptResult.segments_skipped,
+        selected_option: selectedOption,
       },
       ride_hailing: {
         metadata: rideResult.metadata,
@@ -222,98 +232,52 @@ export class FareComparisonServiceService {
 
   private async calculatePtFare(
     option: CachedRouteOption,
-    fareCategory: string,
+    fareCategory: FareCategoryKey,
   ): Promise<PtFareResult> {
     const segments = option.segments ?? [];
     const breakdown: FareBreakdownItem[] = [];
-    let totalFare = 0;
-    let segmentsPriced = 0;
-    let segmentsSkipped = 0;
-
-    const results = await Promise.allSettled(
-      segments.map(async (segment) => {
-        const transportMode = MODE_TO_TRANSPORT[segment.mode];
-
-        if (!transportMode) {
-          return {
-            segment,
-            skipped: true as const,
-            reason: `mode ${segment.mode} has no fare`,
-          };
-        }
-
-        try {
-          const { data: fareRule } = await firstValueFrom(
-            this.http.post<FareServiceRule>(
-              `${FARE_SERVICE_URL}/fare-service/calculate`,
-              {
-                transportMode,
-                fareCategory,
-                distanceKm: segment.distance_km,
-              },
-            ),
-          );
-
-          return {
-            segment,
-            skipped: false as const,
-            fare: parseFloat(String(fareRule.fareAmount)),
-            transportMode,
-          };
-        } catch (err: unknown) {
-          this.logger.warn(
-            `No fare rule for segment ${segment.segment_id} (${transportMode}, ${segment.distance_km}km): ${this.errorMsg(err)}`,
-          );
-          return {
-            segment,
-            skipped: true as const,
-            reason: 'no fare rule found',
-          };
-        }
-      }),
+    const payableSegments = segments.filter(
+      (segment) =>
+        segment.mode === 'BUS' ||
+        segment.mode === 'MRT' ||
+        segment.mode === 'LRT',
     );
 
-    for (const result of results) {
-      if (result.status === 'rejected') {
-        segmentsSkipped++;
-        continue;
+    if (option.fares?.segments?.length) {
+      for (const fareSegment of option.fares.segments) {
+        const routeSegment = segments.find(
+          (segment) => segment.segment_id === fareSegment.segment_id,
+        );
+
+        breakdown.push({
+          segment_id: fareSegment.segment_id,
+          mode: fareSegment.mode,
+          transport_mode: fareSegment.fare_basis_mode ?? undefined,
+          from_stop: routeSegment?.from_stop ?? null,
+          to_stop: routeSegment?.to_stop ?? null,
+          distance_km: fareSegment.distance_km,
+          fare: Number(fareSegment.fares[fareCategory]?.incremental ?? 0),
+        });
       }
 
-      const value = result.value;
-      if (value.skipped) {
-        segmentsSkipped++;
-        if (value.reason !== `mode ${value.segment.mode} has no fare`) {
-          breakdown.push({
-            segment_id: value.segment.segment_id,
-            mode: value.segment.mode,
-            from_stop: value.segment.from_stop,
-            to_stop: value.segment.to_stop,
-            distance_km: value.segment.distance_km,
-            fare: null,
-            note: value.reason,
-          });
-        }
-        continue;
-      }
-
-      segmentsPriced++;
-      totalFare += value.fare;
-      breakdown.push({
-        segment_id: value.segment.segment_id,
-        mode: value.segment.mode,
-        transport_mode: value.transportMode,
-        from_stop: value.segment.from_stop,
-        to_stop: value.segment.to_stop,
-        distance_km: value.segment.distance_km,
-        fare: value.fare,
-      });
+      return {
+        total_fare: parseFloat(
+          String(option.fares.totals?.[fareCategory] ?? option.fare ?? 0),
+        ),
+        breakdown,
+        segments_priced: breakdown.length,
+        segments_skipped: Math.max(
+          0,
+          payableSegments.length - breakdown.length,
+        ),
+      };
     }
 
     return {
-      total_fare: parseFloat(totalFare.toFixed(2)),
+      total_fare: parseFloat(String(option.fare ?? 0)),
       breakdown,
-      segments_priced: segmentsPriced,
-      segments_skipped: segmentsSkipped,
+      segments_priced: 0,
+      segments_skipped: payableSegments.length,
     };
   }
 

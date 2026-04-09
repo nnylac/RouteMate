@@ -141,6 +141,11 @@ a {
   text-align: left;
 }
 
+.page-topbar .page-title {
+  justify-self: center;
+  text-align: center;
+}
+
 .page-topbar--flush-left .page-title {
   grid-column: 1;
 }
@@ -545,6 +550,7 @@ a {
   border-radius: 18px;
   background: var(--soft-blue);
   padding: 16px 16px 18px;
+  cursor: pointer;
 }
 
 .route-card__top,
@@ -875,6 +881,13 @@ a {
   font-weight: 600;
 }
 
+.text-chip--active {
+  background: transparent;
+  color: #3f3f3f;
+  text-decoration: underline;
+  text-underline-offset: 6px;
+}
+
 .text-chip {
   border-radius: 8px;
   padding: 8px 10px;
@@ -894,11 +907,14 @@ a {
   align-items: center;
   text-align: left;
   cursor: pointer;
+  background: rgba(255,255,255,0.78);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 15px 12px;
 }
 
 .route-option + .route-option {
-  border-top: 1px solid #c9c9c9;
-  padding-top: 16px;
+  margin-top: 16px;
 }
 
 .route-option__left {
@@ -1045,7 +1061,9 @@ a {
 .route-header-inline--details {
   gap: 6px;
   flex-wrap: nowrap;
-  overflow-x: auto;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
   white-space: nowrap;
 }
 
@@ -1373,12 +1391,15 @@ a {
 .transaction-card__actions {
   display: flex;
   justify-content: center;
-  margin-top: auto;
-  padding-top: 8px;
+  margin-top: -2px;
+  padding-top: 4px;
 }
 
 .transaction-card__view-more {
   text-align: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .transaction-card__view-more:disabled {
@@ -1389,11 +1410,11 @@ a {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 6px;
-  padding: 10px 12px 0;
-  border-top: 1px solid #d7d7d7;
+  margin-top: 2px;
+  padding: 14px 12px;
   background: rgba(215, 215, 215, 0.12);
   border-radius: 10px;
+  border: 1px solid #d7d7d7;
 }
 
 .transaction-card__breakdown-row {
@@ -1407,6 +1428,11 @@ a {
 
 .transaction-card__breakdown-route {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
 }
 
 .transaction-card__breakdown-amount {
@@ -1584,6 +1610,10 @@ a {
   padding: 10px 12px;
 }
 
+.fare-comparison-ride-card .fare-comparison-card__actions {
+  grid-column: 1 / -1;
+}
+
 .ride-card__logo {
   width: 40px;
   height: 40px;
@@ -1603,13 +1633,18 @@ a {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  margin: 18px 0 28px;
+  margin: 26px 0 36px;
+  gap: 14px;
+}
+
+.profile-avatar-wrap {
   position: relative;
 }
 
 .profile-action-button {
-  align-self: flex-start;
-  margin-top: 12px;
+  align-self: center;
+  margin-top: 0;
+  min-width: 188px;
 }
 
 .profile-actions {
@@ -1620,37 +1655,282 @@ a {
   align-items: flex-start;
 }
 
+.profile-edit-form {
+  gap: 20px;
+}
+
+.profile-edit-form .field-wrapper {
+  position: relative;
+  gap: 0;
+}
+
+.profile-edit-form .field-label {
+  position: absolute;
+  top: -11px;
+  left: 34px;
+  z-index: 1;
+  padding: 0 8px;
+  font-size: 0.92rem;
+  background: #ffffff;
+}
+
+.profile-edit-form .field-input-wrap {
+  min-height: 42px;
+  padding: 0 14px;
+  border-width: 1.5px;
+}
+
+.profile-edit-form .field-icon {
+  color: #a9a9a9;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-edit-form .field-input {
+  font-size: 1rem;
+}
+
+.profile-edit-form .field-input::placeholder {
+  color: #9f9f9f;
+}
+
 .profile-edit-pencil {
   position: absolute;
-  top: 58px;
-  left: calc(50% + 8px);
-  font-size: 1rem;
+  right: -6px;
+  bottom: 6px;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+.profile-avatar-placeholder {
+  width: 94px;
+  height: 94px;
+}
+
+.profile-name {
+  font-size: 2.05rem;
+  font-weight: 500;
+  line-height: 1.08;
+  text-align: center;
 }
 
 .settings-list {
   display: grid;
-  gap: 8px;
+  gap: 0;
+  margin-top: 8px;
 }
 
 .settings-row {
   width: 100%;
-  padding: 12px 2px;
+  padding: 12px 0;
   border-bottom: 1px solid rgba(0,0,0,0.12);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 1.1rem;
+  font-size: 1.08rem;
+  color: #202020;
 }
 
 .logout-button {
-  margin-top: 28px;
+  margin-top: 34px;
   color: #b8b8b8;
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   display: flex;
   gap: 8px;
   align-items: center;
   justify-content: center;
   width: 100%;
+}
+
+.profile-action-button--edit {
+  align-self: center;
+  margin-top: 18px;
+}
+
+.fare-comparison-page {
+  padding-bottom: 28px;
+}
+
+.fare-comparison-header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.fare-comparison-title {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 400;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.fare-comparison-spinner-wrap {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.fare-comparison-spinner-label {
+  font-size: 0.72rem;
+  color: #666;
+  align-self: center;
+}
+
+.input-spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 102px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.input-spinner__button {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.input-spinner__value {
+  min-width: 14px;
+  text-align: center;
+  font-size: 1.2rem;
+  color: #202020;
+}
+
+.fare-comparison-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fare-comparison-section + .fare-comparison-section {
+  padding-top: 14px;
+  border-top: 1px solid #c9c9c9;
+}
+
+.fare-comparison-section__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fare-comparison-section__title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+}
+
+.fare-comparison-section__summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.96rem;
+}
+
+.fare-comparison-section__divider {
+  color: #8b8b8b;
+}
+
+.route-option--comparison {
+  align-items: start;
+  grid-template-columns: 80px 1fr 70px;
+}
+
+.fare-comparison-route-card,
+.fare-comparison-ride-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fare-comparison-card__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+.fare-comparison-view-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.98rem;
+  color: #303030;
+}
+
+.fare-comparison-expand {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid #d8d8d8;
+  background: rgba(215, 215, 215, 0.12);
+  border-radius: 10px;
+}
+
+.fare-comparison-expand__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9rem;
+  align-items: flex-start;
+}
+
+.fare-comparison-expand__route {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.fare-comparison-expand__route > span {
+  min-width: 0;
+}
+
+.fare-comparison-section--summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.fare-comparison-summary-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fare-comparison-summary-label {
+  font-size: 1rem;
+}
+
+.fare-comparison-summary-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
 }
 
 @media (max-width: 420px) {

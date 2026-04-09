@@ -1,4 +1,4 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, Post, Query } from '@nestjs/common';
 import { NotificationService } from './notification-service.service';
 import { Notification } from '../schemas/notification-service-schema';
 
@@ -17,7 +17,9 @@ export class NotificationServiceController {
   }
 
   @Get('notifications')
-  async getAllNotifications(): Promise<Notification[]> {
-    return this.notificationService.getAllNotifications();
+  async getAllNotifications(
+    @Query('userId') userId?: string,
+  ): Promise<Notification[]> {
+    return this.notificationService.getAllNotifications(userId);
   }
 }

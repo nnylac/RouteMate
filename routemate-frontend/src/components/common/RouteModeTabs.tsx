@@ -3,11 +3,12 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { useNavigate } from 'react-router-dom';
 
 interface RouteModeTabsProps {
-  active: 'routes' | 'ride-hailing';
+  active: 'routes' | 'ride-hailing' | 'fare-comparison';
   busDuration?: string | null;
   rideDuration?: string | null;
   origin?: string;
   destination?: string;
+  routeId?: string | number | null;
 }
 
 export function RouteModeTabs({
@@ -16,11 +17,24 @@ export function RouteModeTabs({
   rideDuration = null,
   origin = '',
   destination = '',
+  routeId = null,
 }: RouteModeTabsProps) {
   const navigate = useNavigate();
-  const search = origin && destination
-    ? `?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`
-    : '';
+  const params = new URLSearchParams();
+
+  if (origin) {
+    params.set('origin', origin);
+  }
+
+  if (destination) {
+    params.set('destination', destination);
+  }
+
+  if (routeId !== null && routeId !== undefined && String(routeId).trim()) {
+    params.set('routeId', String(routeId));
+  }
+
+  const search = params.toString() ? `?${params.toString()}` : '';
 
   return (
     <div className="transport-toggle">
@@ -42,7 +56,11 @@ export function RouteModeTabs({
         <span>{rideDuration ?? '...'}</span>
       </button>
 
-      <button className="text-chip" type="button">
+      <button
+        className={`text-chip ${active === 'fare-comparison' ? 'text-chip--active' : ''}`}
+        type="button"
+        onClick={() => navigate(`/fare-comparison${search}`)}
+      >
         Calculate Fares
       </button>
     </div>

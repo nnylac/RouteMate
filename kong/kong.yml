@@ -58,15 +58,15 @@ services:
     routes:
       - name: notification-health
         paths: [/notification-service]
-        methods: [GET]
+        methods: [GET, OPTIONS]
         strip_path: false
       - name: notification-test
         paths: [/notification-service/test]
-        methods: [POST]
+        methods: [POST, OPTIONS]
         strip_path: false
       - name: notification-list
         paths: [/notification-service/notifications]
-        methods: [GET]
+        methods: [GET, OPTIONS]
         strip_path: false
     plugins:
       - name: rate-limiting
@@ -344,7 +344,7 @@ services:
     routes:
       - name: fare-comparison
         paths: [/fare/compare]
-        methods: [GET, POST]
+        methods: [GET, POST, OPTIONS]
         strip_path: false
     plugins:
       - name: rate-limiting

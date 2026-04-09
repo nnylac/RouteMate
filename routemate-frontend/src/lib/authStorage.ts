@@ -46,6 +46,7 @@ export function readStoredUser() {
       fullName: parsedUser.fullName,
       email: parsedUser.email,
       username: parsedUser.username,
+      phoneNumber: parsedUser.phoneNumber,
       isActive: Boolean(parsedUser.isActive),
       transactionUserId: parsedUser.transactionUserId ?? parsedUser.outsystemsUserId ?? parsedUser.id,
       outsystemsUserId:

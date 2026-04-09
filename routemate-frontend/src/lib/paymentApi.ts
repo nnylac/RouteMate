@@ -13,6 +13,13 @@ export interface PaymentConfirmationResponse {
   status: string;
 }
 
+export interface RefundResponse {
+  refundId: string;
+  status: string;
+  amount: number;
+  currency: string;
+}
+
 export function createPaymentIntent(payload: {
   amount: number;
   currency?: string;
@@ -29,6 +36,16 @@ export function confirmPaymentIntent(payload: {
   paymentMethod?: string;
 }) {
   return apiRequest<PaymentConfirmationResponse>('/payment/confirm', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function createRefund(payload: {
+  paymentIntentId: string;
+  amount?: number;
+}) {
+  return apiRequest<RefundResponse>('/payment/refund', {
     method: 'POST',
     body: JSON.stringify(payload),
   });

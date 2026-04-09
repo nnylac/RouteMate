@@ -2,6 +2,7 @@ import { apiRequest } from '@/lib/api';
 import { readStoredUser, toRouteCacheUserId } from '@/lib/authStorage';
 import type {
   DetailedRouteOption,
+  FareComparisonResult,
   RouteBadge,
   RouteFareBreakdown,
   RouteSegmentDetail,
@@ -17,7 +18,12 @@ interface RoutePlannerSegment {
   distance_km: number;
   line_or_service: string | null;
   segment_order: number;
-  arrival_timing?: string | null;
+  arrival_timing?: {
+    line?: string;
+    stop?: string;
+    predicted_arrival_mins?: number;
+    source?: string;
+  } | null;
 }
 
 interface RoutePlannerOptionResponse {
@@ -89,6 +95,68 @@ interface RideQuoteResponse {
     fastestProvider: string;
   } | null;
   quotes: RideQuote[];
+}
+
+interface FareComparisonBreakdownResponseItem {
+  segment_id: number;
+  mode: string;
+  transport_mode?: string;
+  from_stop: string | null;
+  to_stop: string | null;
+  distance_km: number;
+  fare: number | null;
+  note?: string;
+}
+
+interface FareComparisonSelectedOptionResponse extends RoutePlannerOptionResponse {}
+
+interface FareComparisonResponse {
+  route_id: number;
+  origin: string;
+  destination: string;
+  group_size: number;
+  fare_category: 'adult_card' | 'student_card' | 'senior_card';
+  public_transport: {
+    mode: string;
+    total_duration_mins: number;
+    total_distance_km: number;
+    transfer_count: number;
+    fare_per_person: number;
+    fare_breakdown: FareComparisonBreakdownResponseItem[];
+    segments_priced: number;
+    segments_skipped: number;
+    selected_option: FareComparisonSelectedOptionResponse;
+  };
+  ride_hailing: {
+    metadata: {
+      totalOptions: number;
+      cheapestProvider: string;
+      fastestProvider: string;
+    } | null;
+    quotes: Array<{
+      provider: string;
+      price: number;
+      eta: number;
+      route?: string;
+      bookingLink?: string;
+      booking_link?: string;
+      price_per_person?: number;
+    }>;
+    provider_unavailable?: boolean;
+    group_size_note?: string;
+  };
+  filters: {
+    cheapest: {
+      mode: string;
+      provider: string;
+      price: number;
+    };
+    fastest: {
+      mode: string;
+      provider: string;
+      duration_mins: number;
+    };
+  };
 }
 
 interface CachedRouteHistoryOption {
@@ -169,7 +237,17 @@ function toRouteSegment(segment: RoutePlannerSegment): RouteSegmentDetail {
     distanceKm: segment.distance_km,
     lineOrService: segment.line_or_service,
     segmentOrder: segment.segment_order,
-    arrivalTiming: segment.arrival_timing ?? null,
+    arrivalTiming: segment.arrival_timing
+      ? {
+          line: segment.arrival_timing.line,
+          stop: segment.arrival_timing.stop,
+          predictedArrivalMins:
+            typeof segment.arrival_timing.predicted_arrival_mins === 'number'
+              ? segment.arrival_timing.predicted_arrival_mins
+              : undefined,
+          source: segment.arrival_timing.source,
+        }
+      : null,
   };
 }
 
@@ -307,6 +385,7 @@ function toSavedRoute(historyItem: CachedRouteHistoryItem): SavedRoute | null {
 
   return {
     id: `history-${historyItem.route_id}-${selectedOption.option_id}`,
+    routeKey: `${historyItem.origin_label}::${historyItem.destination_label}::${selectedOption.option_id}`,
     routeId: String(historyItem.route_id),
     optionId: String(selectedOption.option_id),
     modeSummary: toModeSummary(selectedOption),
@@ -334,4 +413,72 @@ export function getRideQuotes(origin: string, destination: string) {
     method: 'POST',
     body: JSON.stringify({ origin, destination }),
   });
+}
+
+export async function compareFaresRequest(
+  routeId: number,
+  groupSize: number,
+  fareCategory: 'adult_card' | 'student_card' | 'senior_card' = 'adult_card',
+): Promise<FareComparisonResult> {
+  const response = await apiRequest<FareComparisonResponse>('/fare/compare', {
+    method: 'POST',
+    body: JSON.stringify({
+      route_id: routeId,
+      group_size: groupSize,
+      fare_category: fareCategory,
+      sort_by: 'eta',
+    }),
+  });
+
+  return {
+    routeId: response.route_id,
+    origin: response.origin,
+    destination: response.destination,
+    groupSize: response.group_size,
+    fareCategory: response.fare_category,
+    publicTransport: {
+      mode: response.public_transport.mode,
+      totalDurationMins: response.public_transport.total_duration_mins,
+      totalDistanceKm: response.public_transport.total_distance_km,
+      transferCount: response.public_transport.transfer_count,
+      farePerPerson: Number(response.public_transport.fare_per_person ?? 0),
+      fareBreakdown: response.public_transport.fare_breakdown.map((item) => ({
+        segmentId: item.segment_id,
+        mode: item.mode,
+        transportMode: item.transport_mode,
+        fromStop: item.from_stop,
+        toStop: item.to_stop,
+        distanceKm: Number(item.distance_km ?? 0),
+        fare: typeof item.fare === 'number' ? Number(item.fare) : null,
+        note: item.note,
+      })),
+      segmentsPriced: response.public_transport.segments_priced,
+      segmentsSkipped: response.public_transport.segments_skipped,
+      selectedOption: toRouteOption(response.public_transport.selected_option),
+    },
+    rideHailing: {
+      metadata: response.ride_hailing.metadata,
+      quotes: response.ride_hailing.quotes.map((quote) => ({
+        provider: quote.provider,
+        price: Number(quote.price ?? 0),
+        eta: Number(quote.eta ?? 0),
+        route: quote.route,
+        bookingLink: quote.bookingLink ?? quote.booking_link,
+        pricePerPerson:
+          typeof quote.price_per_person === 'number'
+            ? Number(quote.price_per_person)
+            : undefined,
+      })),
+      providerUnavailable: response.ride_hailing.provider_unavailable,
+      groupSizeNote: response.ride_hailing.group_size_note,
+    },
+    filters: {
+      cheapest: response.filters.cheapest,
+      fastest: {
+        mode: response.filters.fastest.mode,
+        provider: response.filters.fastest.provider,
+        durationMins: response.filters.fastest.duration_mins,
+      },
+    },
+  };
 }

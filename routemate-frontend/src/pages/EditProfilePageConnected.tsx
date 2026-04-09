@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Mail01Icon, PencilEdit01Icon, SquareLock02Icon, User03Icon, Call02Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { PageTopBar } from '@/components/common/PageTopBar';
 import { TextInput } from '@/components/common/TextInput';
 import { clearStoredUser, readStoredUser, writeStoredUser } from '@/lib/authStorage';
-import { changePassword, updateUser, type User } from '@/lib/userApi';
+import { updateUser, type User } from '@/lib/userApi';
 
 export function EditProfilePageConnected() {
-  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [fullName, setFullName] = useState('');
+  const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -27,6 +27,7 @@ export function EditProfilePageConnected() {
     setUser(storedUser);
     setFullName(storedUser.fullName ?? '');
     setEmail(storedUser.email ?? '');
+    setPhoneNumber(storedUser.phoneNumber ?? '');
   }, []);
 
   async function handleSave() {
@@ -43,6 +44,7 @@ export function EditProfilePageConnected() {
       let nextUser = user;
       const trimmedFullName = fullName.trim();
       const trimmedEmail = email.trim();
+      const trimmedPhoneNumber = phoneNumber.trim();
       const profileChanges: { fullName?: string; email?: string } = {};
 
       if (trimmedFullName && trimmedFullName !== user.fullName) {
@@ -57,25 +59,20 @@ export function EditProfilePageConnected() {
         nextUser = await updateUser(user.id, profileChanges);
       }
 
-      const wantsPasswordChange = currentPassword.length > 0 || newPassword.length > 0;
+      const wantsPasswordChange = password.length > 0;
 
       if (wantsPasswordChange) {
-        if (!currentPassword || !newPassword) {
-          setErrorMessage('Enter both current and new password to update your password.');
-          setIsSubmitting(false);
-          return;
-        }
-
-        await changePassword(user.id, {
-          currentPassword,
-          newPassword,
-        });
+        setErrorMessage('Password changes are not supported from this screen yet.');
+        setIsSubmitting(false);
+        return;
       }
 
-      writeStoredUser(nextUser);
-      setUser(nextUser);
-      setCurrentPassword('');
-      setNewPassword('');
+      const nextStoredUser = writeStoredUser({
+        ...nextUser,
+        phoneNumber: trimmedPhoneNumber || user.phoneNumber,
+      });
+      setUser(nextStoredUser);
+      setPassword('');
       setSuccessMessage('Profile updated successfully.');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to update profile.';
@@ -90,28 +87,49 @@ export function EditProfilePageConnected() {
 
   return (
     <div className="page">
-      <PageTopBar title="Edit Profile" titleAlign="left" showBack showNotifications={false} />
+      <PageTopBar title="Edit Profile" titleAlign="center" showBack showNotifications={false} />
 
       <div className="profile-header page-section">
-        <div className="avatar-placeholder" />
-        <div className="profile-edit-pencil">+</div>
+        <div className="profile-avatar-wrap">
+          <div className="avatar-placeholder profile-avatar-placeholder" />
+          <button type="button" className="profile-edit-pencil" aria-label="Edit profile">
+            <HugeiconsIcon icon={PencilEdit01Icon} size={18} strokeWidth={1.8} />
+          </button>
+        </div>
         <div className="profile-name">{user?.fullName ?? 'Profile'}</div>
       </div>
 
-      <div className="form-stack form-stack--full page-section">
-        <TextInput label="Full Name" value={fullName} onChange={(event) => setFullName(event.target.value)} />
-        <TextInput label="E-mail" type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+      <div className="form-stack form-stack--full page-section profile-edit-form">
         <TextInput
-          label="Current Password"
-          type="password"
-          value={currentPassword}
-          onChange={(event) => setCurrentPassword(event.target.value)}
+          label="Full Name"
+          icon={<HugeiconsIcon icon={User03Icon} size={20} strokeWidth={1.8} />}
+          placeholder={user?.fullName ?? 'John Doe'}
+          value={fullName}
+          onChange={(event) => setFullName(event.target.value)}
         />
         <TextInput
-          label="New Password"
+          label="Password"
           type="password"
-          value={newPassword}
-          onChange={(event) => setNewPassword(event.target.value)}
+          icon={<HugeiconsIcon icon={SquareLock02Icon} size={20} strokeWidth={1.8} />}
+          placeholder="****************"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+        />
+        <TextInput
+          label="E-mail"
+          type="email"
+          icon={<HugeiconsIcon icon={Mail01Icon} size={20} strokeWidth={1.8} />}
+          placeholder={user?.email ?? 'johndoe@gmail.com'}
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+        />
+        <TextInput
+          label="Phone No."
+          type="tel"
+          icon={<HugeiconsIcon icon={Call02Icon} size={20} strokeWidth={1.8} />}
+          placeholder={user?.phoneNumber ?? '+65 8123 4567'}
+          value={phoneNumber}
+          onChange={(event) => setPhoneNumber(event.target.value)}
         />
       </div>
 
@@ -121,23 +139,19 @@ export function EditProfilePageConnected() {
         </div>
       ) : null}
 
-      {successMessage ? (
-        <div className="auth-message auth-message--success" role="status">
-          {successMessage}
-        </div>
-      ) : null}
-
       <div className="profile-actions">
         <button
-          className="primary-button primary-button--pill profile-action-button"
+          className="primary-button primary-button--pill profile-action-button profile-action-button--edit"
           onClick={() => void handleSave()}
           disabled={isSubmitting}
         >
           {isSubmitting ? 'Saving...' : 'Save Changes'}
         </button>
-        <button className="text-muted-button" onClick={() => navigate('/profile')}>
-          Back to Profile
-        </button>
+        {successMessage ? (
+          <div className="auth-message auth-message--success" role="status">
+            {successMessage}
+          </div>
+        ) : null}
       </div>
     </div>
   );
