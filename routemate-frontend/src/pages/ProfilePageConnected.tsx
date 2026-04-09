@@ -4,6 +4,7 @@ import {
   ArrowRight01Icon,
   LogoutSquare01Icon,
   PencilEdit01Icon,
+  SingLeftIcon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { PageTopBar } from '@/components/common/PageTopBar';
@@ -24,7 +25,9 @@ export function ProfilePageConnected() {
 
       <div className="profile-header page-section">
         <div className="profile-avatar-wrap">
-          <div className="avatar-placeholder profile-avatar-placeholder" />
+          <div className="avatar-placeholder profile-avatar-placeholder">
+            <HugeiconsIcon icon={SingLeftIcon} size={52} strokeWidth={1.8} />
+          </div>
           <button
             type="button"
             className="profile-edit-pencil"

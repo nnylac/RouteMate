@@ -9,7 +9,6 @@ export class ArrivalTimingServiceController {
     private readonly arrivalTimingServiceService: ArrivalTimingServiceService,
   ) {}
 
-  @Get()
   @ApiOperation({ summary: 'Health check' })
   @ApiResponse({
     status: 200,
@@ -21,7 +20,7 @@ export class ArrivalTimingServiceController {
     return 'arrival timing service is running';
   }
 
-  @Get('timing')
+  @Get()
   @ApiOperation({ summary: 'Get arrival timing for a bus/MRT line and stop' })
   @ApiQuery({
     name: 'line',

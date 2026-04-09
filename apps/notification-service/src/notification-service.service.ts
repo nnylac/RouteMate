@@ -11,6 +11,14 @@ interface NotificationEventPayload {
   failureReason?: string;
 }
 
+interface CreateNotificationInput {
+  userId: string;
+  type: string;
+  title: string;
+  message: string;
+  isRead?: boolean;
+}
+
 @Injectable()
 export class NotificationService {
   constructor(
@@ -23,15 +31,13 @@ export class NotificationService {
   }
 
   async createTestNotification(): Promise<Notification> {
-    const notification = new this.notificationModel({
+    return this.createNotification({
       userId: 'user_001',
       type: 'card_low_balance',
       title: 'Low Card Balance',
       message: 'Your card balance has fallen below the threshold.',
       isRead: false,
     });
-
-    return notification.save();
   }
 
   async getAllNotifications(userId?: string): Promise<Notification[]> {
@@ -56,12 +62,22 @@ export class NotificationService {
       return null;
     }
 
-    const notification = new this.notificationModel({
+    return this.createNotification({
       userId,
       type: notificationContent.type,
       title: notificationContent.title,
       message: notificationContent.message,
       isRead: false,
+    });
+  }
+
+  async createNotification(input: CreateNotificationInput): Promise<Notification> {
+    const notification = new this.notificationModel({
+      userId: input.userId,
+      type: input.type,
+      title: input.title,
+      message: input.message,
+      isRead: input.isRead ?? false,
     });
 
     return notification.save();

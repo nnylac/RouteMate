@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Mail01Icon, PencilEdit01Icon, SquareLock02Icon, User03Icon, Call02Icon } from '@hugeicons/core-free-icons';
+import { Mail01Icon, PencilEdit01Icon, SquareLock02Icon, User03Icon, Call02Icon, SingLeftIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { PageTopBar } from '@/components/common/PageTopBar';
 import { TextInput } from '@/components/common/TextInput';
@@ -91,7 +91,9 @@ export function EditProfilePageConnected() {
 
       <div className="profile-header page-section">
         <div className="profile-avatar-wrap">
-          <div className="avatar-placeholder profile-avatar-placeholder" />
+          <div className="avatar-placeholder profile-avatar-placeholder">
+            <HugeiconsIcon icon={SingLeftIcon} size={52} strokeWidth={1.8} />
+          </div>
           <button type="button" className="profile-edit-pencil" aria-label="Edit profile">
             <HugeiconsIcon icon={PencilEdit01Icon} size={18} strokeWidth={1.8} />
           </button>

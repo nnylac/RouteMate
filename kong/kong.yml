@@ -30,6 +30,10 @@ services:
         paths: [/user-service/login]
         methods: [POST, OPTIONS]
         strip_path: false
+      - name: user-forgot-password
+        paths: [/user-service/forgot-password]
+        methods: [POST, OPTIONS]
+        strip_path: false
       - name: user-list
         paths: [/user-service/users]
         methods: [GET, OPTIONS]
@@ -66,7 +70,7 @@ services:
         strip_path: false
       - name: notification-list
         paths: [/notification-service/notifications]
-        methods: [GET, OPTIONS]
+        methods: [GET, POST, OPTIONS]
         strip_path: false
     plugins:
       - name: rate-limiting

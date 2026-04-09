@@ -67,8 +67,6 @@ export class NotificationServiceController {
       ],
     },
   })
-  async getAllNotifications(): Promise<Notification[]> {
-    return this.notificationService.getAllNotifications();
   async getAllNotifications(
     @Query('userId') userId?: string,
   ): Promise<Notification[]> {

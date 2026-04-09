@@ -70,3 +70,13 @@ export function changePassword(
     },
   );
 }
+
+export function forgotPassword(payload: {
+  usernameOrEmail: string;
+  newPassword: string;
+}) {
+  return apiRequest<{ message: string }>('/user-service/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}

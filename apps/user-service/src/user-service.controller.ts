@@ -5,6 +5,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
 
@@ -112,6 +113,53 @@ export class UserServiceController {
   })
   async login(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
     return this.userService.login(loginDto);
+  }
+
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Reset password using username or email' })
+  @ApiBody({
+    type: ForgotPasswordDto,
+    examples: {
+      example: {
+        summary: 'Reset password',
+        value: {
+          usernameOrEmail: 'john@example.com',
+          newPassword: 'newpassword456',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Password reset successfully',
+    schema: { example: { message: 'Password reset successfully' } },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+    schema: {
+      example: {
+        message: 'User not found',
+        error: 'Not Found',
+        statusCode: 404,
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'New password invalid',
+    schema: {
+      example: {
+        message: 'New password must be different from current password',
+        error: 'Bad Request',
+        statusCode: 400,
+      },
+    },
+  })
+  async forgotPassword(
+    @Body() forgotPasswordDto: ForgotPasswordDto,
+  ): Promise<{ message: string }> {
+    return this.userService.forgotPassword(forgotPasswordDto);
   }
 
   @Get('users')
