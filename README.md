@@ -98,7 +98,42 @@ docker compose down -v
 docker compose up -d
 ```
 
-## 4. Start Backend Services
+## 4. Fare Service Setup (Required)
+The `fare-service` requires fare data (MRT/LRT and trunk bus fares) to be populated in the database before it can function correctly.
+
+If this step is skipped, fare calculations and comparisons will return empty or incorrect results.
+
+### Step 1: Check if fare data exists
+
+```bash
+GET http://localhost:3004/fare-service/rules
+```
+
+if [] is returned, proceed to step 2, else go to 5.
+
+### Step 2: Import trunk bus fares
+```bash
+POST http://localhost:3004/fare-service/import/trunk-bus
+```
+
+### Step 3: Import MRT/LRT fares
+```bash
+POST http://localhost:3004/fare-service/import/mrt-lrt
+```
+
+### Step 4: Verify data
+```bash
+GET http://localhost:3004/fare-service/rules
+```
+You should now see populated fare rules.
+
+Notes
+* Only trunk bus services are supported
+* Express and feeder services are not included
+* This prototype uses static fare data and does not integrate with real-time external fare APIs
+
+
+## 5. Start Backend Services
 
 ```bash
 # Start all services at once (recommended)
@@ -112,7 +147,7 @@ nest start user-service --watch
 nest start ride-hailing-aggregator-service --watch
 ```
 
-## 5. Service URLs
+## 6. Service URLs
 
 All external traffic should go through Kong on port **8080**. Direct service ports are for local development only.
 
@@ -133,7 +168,7 @@ All external traffic should go through Kong on port **8080**. Direct service por
 | Notifications | `GET :8080/notification-service/notifications` | :3006 |
 | Route cache | `GET/POST :8080/route-cache` | :3010 |
 
-## 6. Monitoring
+## 7. Monitoring
 
 | Tool | URL | Credentials |
 |---|---|---|
@@ -146,7 +181,7 @@ To view Kong metrics in Grafana, import dashboard ID **7424** (official Kong das
 2. Dashboards → New → Import
 3. Enter ID `7424` → Load → select Prometheus datasource → Import
 
-## 7. Daily Startup Checklist
+## 8. Daily Startup Checklist
 
 ```bash
 # 1. Open Docker Desktop and wait for it to fully start
