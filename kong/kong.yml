@@ -151,32 +151,6 @@ services:
           policy: local
           fault_tolerant: true
 
-  # ── Transaction Service (port 3011) ──────────────────────────────────
-  - name: transaction-service
-    url: http://host.docker.internal:3011
-    connect_timeout: 10000
-    read_timeout: 30000
-    write_timeout: 30000
-    routes:
-      - name: transaction-list
-        paths: [/transactions]
-        methods: [GET, POST]
-        strip_path: false
-      - name: transaction-by-id
-        paths: [/transactions]
-        methods: [GET]
-        strip_path: false
-      - name: transaction-health-db
-        paths: [/transactions/health/db]
-        methods: [GET]
-        strip_path: false
-    plugins:
-      - name: rate-limiting
-        config:
-          minute: 60
-          policy: local
-          fault_tolerant: true
-
   # ── Fare Service (port 3004) ──────────────────────────────────────────
   - name: fare-service
     url: http://host.docker.internal:3004

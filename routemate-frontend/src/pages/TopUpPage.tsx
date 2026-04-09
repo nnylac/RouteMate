@@ -5,6 +5,7 @@ import stripeLogo from '@/assets/payment-logos/stripe.svg';
 import { PageTopBar } from '@/components/common/PageTopBar';
 import { TopUpCardPreview } from '@/components/common/TopUpCardPreview';
 import { useCards } from '@/context/CardContext';
+import { readStoredUser } from '@/lib/authStorage';
 import { useNavigate } from 'react-router-dom';
 
 const amounts = [10, 20, 30, 50, 100];
@@ -45,7 +46,7 @@ export function TopUpPage() {
     setAmountError('');
   }
 
-  function handleTopUp() {
+  async function handleTopUp() {
     if (!amount) {
       setAmountError('Please enter a top up amount.');
       return;
@@ -58,7 +59,17 @@ export function TopUpPage() {
       return;
     }
 
-    topUpCard(cards[0].id, parsedAmount);
+    const storedUser = readStoredUser();
+
+    if (!storedUser?.transactionUserId) {
+      setAmountError('No signed-in user ID found for this account. Please log in again.');
+      return;
+    }
+
+    void topUpCard(cards[0].id, parsedAmount, {
+      transactionUserId: storedUser.transactionUserId,
+      appUserId: storedUser.id,
+    });
     navigate('/top-up-success');
   }
 
@@ -132,7 +143,7 @@ export function TopUpPage() {
         </div>
       </section>
 
-      <button type="button" className="success-button" onClick={handleTopUp}>
+      <button type="button" className="success-button" onClick={() => void handleTopUp()}>
         <span>Top Up</span>
         <span>{selectedAmount !== null ? `$ ${selectedAmount.toFixed(2)}` : '$ --'}</span>
         <span>→</span>

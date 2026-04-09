@@ -8,8 +8,7 @@ const DEFAULT_EXCHANGE = 'routemate.events';
 export class RabbitMQPublisher implements OnModuleDestroy {
   private readonly logger = new Logger(RabbitMQPublisher.name);
   private readonly url = process.env.RABBITMQ_URL ?? DEFAULT_URL;
-  private readonly exchange =
-    process.env.RABBITMQ_EXCHANGE ?? DEFAULT_EXCHANGE;
+  private readonly exchange = process.env.RABBITMQ_EXCHANGE ?? DEFAULT_EXCHANGE;
   private connection: amqp.ChannelModel | null = null;
   private channel: amqp.Channel | null = null;
 
@@ -20,7 +19,9 @@ export class RabbitMQPublisher implements OnModuleDestroy {
 
     this.connection = await amqp.connect(this.url);
     this.channel = await this.connection.createChannel();
-    await this.channel.assertExchange(this.exchange, 'topic', { durable: true });
+    await this.channel.assertExchange(this.exchange, 'topic', {
+      durable: true,
+    });
     return this.channel;
   }
 

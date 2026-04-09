@@ -15,14 +15,9 @@ import { TransitBadge } from '@/components/common/TransitBadge';
 import { useCards } from '@/context/CardContext';
 import { useBookmarkedRoutes } from '@/hooks/useBookmarkedRoutes';
 import { readStoredUser } from '@/lib/authStorage';
-import {
-  createTransactionRequest,
-  updateTransactionStatusRequest,
-} from '@/lib/cardApi';
 import { searchRoutes } from '@/lib/journeyApi';
 import {
   saveTransactionMetadata,
-  updateTransactionMetadataStatus,
 } from '@/lib/transactionHistoryStorage';
 import type { DetailedRouteOption, RouteBadge, RouteSegmentDetail, SavedRoute } from '@/types';
 
@@ -461,73 +456,39 @@ export function RouteDetailsPageCurrent() {
       return;
     }
 
-    let transactionId: number | null = null;
-
     try {
       setIsCompletingJourney(true);
       setJourneyError('');
-      const transaction = await createTransactionRequest({
-        userId: storedUser.transactionUserId,
-        cardId: currentCard.id,
-        amount: selectedRoute.fare,
-        transactionType: 'payment',
-        status: 'pending',
+      const updatedCard = await deductFare(currentCard.id, selectedRoute.fare, {
+        transactionUserId: storedUser.transactionUserId,
+        appUserId: storedUser.id,
         reference: `journey_${currentCard.id}_${selectedRoute.id}_${Date.now()}`,
       });
 
-      if (!transaction.Id || transaction.Id <= 0) {
-        throw new Error('Unable to create journey transaction.');
+      if (updatedCard.transactionId) {
+        saveTransactionMetadata({
+          transactionId: updatedCard.transactionId,
+          cardId: currentCard.id,
+          category: getTransactionCategory(selectedRoute),
+          title: getTransactionTitle(selectedRoute),
+          route: `${origin} -> ${destination}`,
+          status: 'success',
+          routeBreakdown: selectedRoute,
+        });
       }
-
-      transactionId = transaction.Id;
-      saveTransactionMetadata({
-        transactionId: transaction.Id,
-        cardId: currentCard.id,
-        category: getTransactionCategory(selectedRoute),
-        title: getTransactionTitle(selectedRoute),
-        route: `${origin} → ${destination}`,
-        status: 'pending',
-        routeBreakdown: selectedRoute,
-      });
-      const updatedCard = await deductFare(currentCard.id, selectedRoute.fare);
-      await updateTransactionStatusRequest(transactionId, {
-        status: 'success',
-        transactionType: 'payment',
-        cardId: currentCard.id,
-        userId: storedUser.transactionUserId,
-        amount: selectedRoute.fare,
-        balance: updatedCard.balance,
-      });
-      updateTransactionMetadataStatus(transactionId, 'success');
 
       navigate('/journey-complete', {
         replace: true,
         state: {
           cardId: currentCard.id,
           fareAmount: selectedRoute.fare,
+          transactionWarning: updatedCard.transactionWarning,
         },
       });
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Unable to complete journey.';
-
-      if (transactionId !== null) {
-        try {
-          await updateTransactionStatusRequest(transactionId, {
-            status: 'failed',
-            failureReason: message,
-            transactionType: 'payment',
-            cardId: currentCard.id,
-            userId: storedUser.transactionUserId,
-            amount: selectedRoute.fare,
-          });
-          updateTransactionMetadataStatus(transactionId, 'failed');
-        } catch {
-          // Preserve the original deduction error if transaction update fails.
-        }
-      }
-
-      setJourneyError(message);
+      setJourneyError(
+        error instanceof Error ? error.message : 'Unable to complete journey.',
+      );
     } finally {
       setIsCompletingJourney(false);
     }

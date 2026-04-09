@@ -1,24 +1,15 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "apps/api-gateway/src",
+  "sourceRoot": "apps/user-service/src",
   "compilerOptions": {
     "deleteOutDir": true,
     "webpack": true,
-    "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
+    "tsConfigPath": "apps/user-service/tsconfig.app.json"
   },
   "monorepo": true,
-  "root": "apps/api-gateway",
+  "root": "apps/user-service",
   "projects": {
-    "api-gateway": {
-      "type": "application",
-      "root": "apps/api-gateway",
-      "entryFile": "main",
-      "sourceRoot": "apps/api-gateway/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
-      }
-    },
     "arrival-timing-service": {
       "type": "application",
       "root": "apps/arrival-timing-service",
@@ -132,15 +123,6 @@
       "sourceRoot": "apps/route-planner-orchestrator-service/src",
       "compilerOptions": {
         "tsConfigPath": "apps/route-planner-orchestrator-service/tsconfig.app.json"
-      }
-    },
-    "transaction-service": {
-      "type": "application",
-      "root": "apps/transaction-service",
-      "entryFile": "main",
-      "sourceRoot": "apps/transaction-service/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/transaction-service/tsconfig.app.json"
       }
     },
     "user-service": {

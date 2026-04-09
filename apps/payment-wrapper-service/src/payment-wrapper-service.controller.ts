@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import * as common from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -6,19 +6,50 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { PaymentWrapperServiceService } from './payment-wrapper-service.service';
+import { PaymentWrapperService } from './payment-wrapper-service.service';
 import { CreatePaymentIntentDto } from '../dto/create-payment-intent.dto';
 import { ConfirmPaymentDto } from '../dto/confirm-payment.dto';
 import { CreateRefundDto } from '../dto/create-refund.dto';
+import { Request } from 'express';
 
 @ApiTags('Payment Wrapper Service')
-@Controller('payment')
+@common.Controller('payment')
 export class PaymentWrapperServiceController {
   constructor(
-    private readonly paymentWrapperServiceService: PaymentWrapperServiceService,
+    private readonly paymentWrapperServiceService: PaymentWrapperService,
   ) {}
 
-  @Post('intent')
+  @common.Post('webhook')
+  @ApiOperation({
+    summary: 'Stripe webhook endpoint for payment status updates',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Webhook received successfully',
+    schema: {
+      example: {
+        received: true,
+        type: 'payment_intent.succeeded',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid Stripe webhook signature',
+    schema: {
+      example: {
+        message:
+          'Webhook Error: No signatures found matching the expected signature for payload',
+        error: 'Bad Request',
+        statusCode: 400,
+      },
+    },
+  })
+  async handleWebhook(@common.Req() req: common.RawBodyRequest<Request>) {
+    return this.paymentWrapperServiceService.handleWebhook(req);
+  }
+
+  @common.Post('intent')
   @ApiOperation({ summary: 'Create a Stripe payment intent for card top-up' })
   @ApiBody({
     type: CreatePaymentIntentDto,
@@ -61,11 +92,11 @@ export class PaymentWrapperServiceController {
       },
     },
   })
-  async createPaymentIntent(@Body() dto: CreatePaymentIntentDto) {
+  async createPaymentIntent(@common.Body() dto: CreatePaymentIntentDto) {
     return this.paymentWrapperServiceService.createPaymentIntent(dto);
   }
 
-  @Post('confirm')
+  @common.Post('confirm')
   @ApiOperation({ summary: 'Confirm a Stripe payment intent' })
   @ApiBody({
     type: ConfirmPaymentDto,
@@ -109,11 +140,11 @@ export class PaymentWrapperServiceController {
       },
     },
   })
-  async confirmPayment(@Body() dto: ConfirmPaymentDto) {
+  async confirmPayment(@common.Body() dto: ConfirmPaymentDto) {
     return this.paymentWrapperServiceService.confirmPayment(dto);
   }
 
-  @Post('refund')
+  @common.Post('refund')
   @ApiOperation({
     summary: 'Create a refund for a payment intent — used in rollback flow',
   })
@@ -154,11 +185,11 @@ export class PaymentWrapperServiceController {
       },
     },
   })
-  async createRefund(@Body() dto: CreateRefundDto) {
+  async createRefund(@common.Body() dto: CreateRefundDto) {
     return this.paymentWrapperServiceService.createRefund(dto);
   }
 
-  @Get('intent/:id')
+  @common.Get('intent/:id')
   @ApiOperation({ summary: 'Get a payment intent by Stripe ID' })
   @ApiParam({
     name: 'id',
@@ -189,11 +220,11 @@ export class PaymentWrapperServiceController {
       },
     },
   })
-  async getPaymentIntent(@Param('id') id: string) {
+  async getPaymentIntent(@common.Param('id') id: string) {
     return this.paymentWrapperServiceService.getPaymentIntent(id);
   }
 
-  @Get('health')
+  @common.Get('health')
   @ApiOperation({ summary: 'Health check' })
   @ApiResponse({
     status: 200,

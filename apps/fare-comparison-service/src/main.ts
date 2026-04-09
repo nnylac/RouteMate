@@ -39,4 +39,4 @@ async function bootstrap() {
   await app.listen(port);
   console.log(`fare-comparison-service running on port ${port}`);
 }
-bootstrap();
+void bootstrap();

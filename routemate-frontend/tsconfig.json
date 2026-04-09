@@ -1,4 +1,11 @@
 {
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "react-native-input-spinner": ["src/shims/react-native-input-spinner"]
+    }
+  },
   "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },

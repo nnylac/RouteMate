@@ -9,7 +9,6 @@ routemate/
 ├─ package.json
 ├─ README.md
 ├─ apps/
-│  ├─ api-gateway/
 │  ├─ arrival-timing-service/
 │  ├─ card-orchestrator-service/
 │  ├─ card-service/
@@ -21,7 +20,6 @@ routemate/
 │  ├─ ride-hailing-aggregator-service/
 │  ├─ ride-hailing-wrapper/
 │  ├─ route-cache-service/
-│  ├─ transaction-service/
 │  └─ user-service/
 ├─ frontend/
 ```
@@ -63,9 +61,6 @@ cp .env.example .env
 Then create a `.env` file inside each DB-dependent service folder:
 
 ```bash
-# apps/api-gateway/.env
-PORT=3000
-
 # apps/card-orchestrator-service/.env
 PORT=3001
 
@@ -89,13 +84,6 @@ MONGO_URI=mongodb://<user>:<password>@localhost:27017/notification_db?authSource
 PORT=3010
 MONGO_URI=mongodb://<user>:<password>@localhost:27017/route_cache_db?authSource=admin
 
-# apps/transaction-service/.env
-PORT=3011
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_USER=<your_postgres_user>
-POSTGRES_PASSWORD=<your_postgres_password>
-POSTGRES_DB=transaction_service_db
 ```
 
 
@@ -140,7 +128,6 @@ All external traffic should go through Kong on port **8080**. Direct service por
 | Users | `GET :8080/user-service/users` | :3012 |
 | Cards | `GET/POST :8080/card-service/cards` | :3002 |
 | Card top-up | `PATCH :8080/card-service/cards/:id/topup` | :3002 |
-| Transactions | `GET/POST :8080/transactions` | :3011 |
 | Fare rules | `GET :8080/fare-service/rules` | :3004 |
 | Fare calculate | `POST :8080/fare-service/calculate` | :3004 |
 | Notifications | `GET :8080/notification-service/notifications` | :3006 |
@@ -177,6 +164,6 @@ npm run start:all
 nest start <service-name>
 
 # example
-nest start transaction-service
+nest start user-service
 ```
 

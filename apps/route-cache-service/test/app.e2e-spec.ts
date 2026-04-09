@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { RouteCacheServiceModule } from './../src/route-cache-service.module';
 
 describe('RouteCacheServiceController (e2e)', () => {

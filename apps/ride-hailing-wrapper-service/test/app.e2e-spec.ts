@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { RideHailingWrapperServiceModule } from './../src/ride-hailing-wrapper-service.module';
 
 describe('RideHailingWrapperServiceController (e2e)', () => {

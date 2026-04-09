@@ -39,12 +39,12 @@ describe('RouteCacheService', () => {
     });
 
     it('rejects requests without user_id or route_id', async () => {
-      await expect(service.saveRouteCache({ route_id: 321 } as any)).rejects.toBeInstanceOf(
-        BadRequestException,
-      );
-      await expect(service.saveRouteCache({ user_id: 99 } as any)).rejects.toBeInstanceOf(
-        BadRequestException,
-      );
+      await expect(
+        service.saveRouteCache({ route_id: 321 } as any),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      await expect(
+        service.saveRouteCache({ user_id: 99 } as any),
+      ).rejects.toBeInstanceOf(BadRequestException);
       expect(routeCacheModel.findOneAndUpdate).not.toHaveBeenCalled();
     });
   });

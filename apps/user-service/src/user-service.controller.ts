@@ -1,5 +1,11 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+} from '@nestjs/swagger';
 import { UserService } from './user-service.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
@@ -42,7 +48,8 @@ export class UserServiceController {
     },
   })
   @ApiResponse({
-    status: 201, description: 'User registered successfully',
+    status: 201,
+    description: 'User registered successfully',
     schema: {
       example: {
         id: '6614a2f3c9b1234567890abc',
@@ -86,7 +93,8 @@ export class UserServiceController {
     },
   })
   @ApiResponse({
-    status: 201, description: 'Login successful',
+    status: 201,
+    description: 'Login successful',
     schema: {
       example: {
         message: 'Login successful',
@@ -193,7 +201,8 @@ export class UserServiceController {
     example: '6614a2f3c9b1234567890abc',
   })
   @ApiResponse({
-    status: 200, description: 'User found',
+    status: 200,
+    description: 'User found',
     schema: {
       example: {
         id: '6614a2f3c9b1234567890abc',

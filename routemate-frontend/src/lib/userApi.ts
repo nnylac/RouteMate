@@ -7,7 +7,7 @@ export interface User {
   username: string;
   phoneNumber?: string;
   isActive: boolean;
-  transactionUserId?: number;
+  transactionUserId?: string | number;
   outsystemsUserId?: number;
   createdAt?: string;
   updatedAt?: string;

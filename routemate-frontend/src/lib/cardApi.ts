@@ -49,31 +49,61 @@ export async function createCard(payload: {
 export async function topUpCardRequest(
   cardId: string,
   amount: number,
-): Promise<CardInfo> {
+  context: {
+    transactionUserId: string | number;
+    appUserId?: string;
+  },
+): Promise<CardInfo & { transactionId?: number; transactionWarning?: string }> {
   const card = await apiRequest<BackendCard>(
     `/card-orchestrator/cards/${cardId}/topup`,
     {
       method: 'PATCH',
-      body: JSON.stringify({ amount }),
+      body: JSON.stringify({
+        amount,
+        transactionUserId: context.transactionUserId,
+        appUserId: context.appUserId,
+      }),
     },
   );
 
-  return toCardInfo(card, 0);
+  return {
+    ...toCardInfo(card, 0),
+    transactionId:
+      (card as BackendCard & { transactionId?: number }).transactionId,
+    transactionWarning:
+      (card as BackendCard & { transactionWarning?: string }).transactionWarning,
+  };
 }
 
 export async function deductFareRequest(
   cardId: string,
   amount: number,
-): Promise<CardInfo> {
+  context?: {
+    transactionUserId?: string | number;
+    appUserId?: string;
+    reference?: string;
+  },
+): Promise<CardInfo & { transactionId?: number; transactionWarning?: string }> {
   const card = await apiRequest<BackendCard>(
     `/card-orchestrator/cards/${cardId}/deduct`,
     {
       method: 'PATCH',
-      body: JSON.stringify({ amount }),
+      body: JSON.stringify({
+        amount,
+        transactionUserId: context?.transactionUserId,
+        appUserId: context?.appUserId,
+        reference: context?.reference,
+      }),
     },
   );
 
-  return toCardInfo(card, 0);
+  return {
+    ...toCardInfo(card, 0),
+    transactionId:
+      (card as BackendCard & { transactionId?: number }).transactionId,
+    transactionWarning:
+      (card as BackendCard & { transactionWarning?: string }).transactionWarning,
+  };
 }
 
 export interface TransactionRecord {

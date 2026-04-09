@@ -4,7 +4,9 @@ import { PaymentWrapperServiceModule } from './payment-wrapper-service.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(PaymentWrapperServiceModule);
+  const app = await NestFactory.create(PaymentWrapperServiceModule, {
+    rawBody: true,
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -36,4 +38,4 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3007);
 }
-bootstrap();
+void bootstrap();

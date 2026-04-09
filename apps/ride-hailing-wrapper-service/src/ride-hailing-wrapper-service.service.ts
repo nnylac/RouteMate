@@ -42,9 +42,8 @@ export class RideHailingWrapperServiceService {
     );
 
     // 2. Try exact-ish / partial matching on origin and destination
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const routeData = data.find(
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       (route: any) =>
         this.isLocationMatch(origin, route.origin) &&
         this.isLocationMatch(destination, route.destination),
@@ -61,7 +60,7 @@ export class RideHailingWrapperServiceService {
     const quote = routeData.results.find(
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       (r: any) => r.provider.toLowerCase() === provider.toLowerCase(),
-    ); // <--- Added the missing ');' here
+    );
 
     if (!quote) {
       throw new Error(`Provider ${provider} not found for this route`);

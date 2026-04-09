@@ -6,6 +6,7 @@ import {
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { PageTopBar } from '@/components/common/PageTopBar';
 import { readStoredUser } from '@/lib/authStorage';
 import { getNotifications, type NotificationRecord } from '@/lib/notificationApi';
@@ -44,6 +45,7 @@ function getNotificationTone(type: string): NotificationTone {
 }
 
 export function NotificationsPage() {
+  const location = useLocation();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -56,10 +58,23 @@ export function NotificationsPage() {
         const storedUser = readStoredUser();
         const userId = storedUser?.id;
         const records = await getNotifications(userId);
+        const highlightedNotification =
+          typeof location.state === 'object' &&
+          location.state !== null &&
+          'highlightedNotification' in location.state
+            ? (location.state.highlightedNotification as NotificationRecord | undefined)
+            : undefined;
+
+        const mergedRecords = highlightedNotification
+          ? [
+              highlightedNotification,
+              ...records.filter((record) => record._id !== highlightedNotification._id),
+            ]
+          : records;
 
         if (!isCancelled) {
           setNotifications(
-            records.map((record) => ({
+            mergedRecords.map((record) => ({
               ...record,
               tone: getNotificationTone(record.type),
             })),
@@ -85,7 +100,7 @@ export function NotificationsPage() {
     return () => {
       isCancelled = true;
     };
-  }, []);
+  }, [location.state]);
 
   return (
     <div className="page">

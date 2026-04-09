@@ -7,6 +7,7 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './src'),
+            'react-native-input-spinner': path.resolve(__dirname, './src/shims/react-native-input-spinner.tsx'),
         },
     },
 });

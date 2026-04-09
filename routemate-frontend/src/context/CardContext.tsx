@@ -11,8 +11,20 @@ interface CardContextValue {
   latestTopUpAmount: number | null;
   refreshCards: () => Promise<void>;
   createCard: (cardType: CardType) => Promise<CardInfo>;
-  topUpCard: (cardId: string, amount: number) => Promise<CardInfo>;
-  deductFare: (cardId: string, amount: number) => Promise<CardInfo>;
+  topUpCard: (
+    cardId: string,
+    amount: number,
+    context: { transactionUserId: string | number; appUserId?: string },
+  ) => Promise<CardInfo & { transactionId?: number; transactionWarning?: string }>;
+  deductFare: (
+    cardId: string,
+    amount: number,
+    context?: {
+      transactionUserId?: string | number;
+      appUserId?: string;
+      reference?: string;
+    },
+  ) => Promise<CardInfo & { transactionId?: number; transactionWarning?: string }>;
 }
 
 const CardContext = createContext<CardContextValue | null>(null);
@@ -79,8 +91,12 @@ export function CardProvider({ children }: { children: ReactNode }) {
     return createdCard;
   }
 
-  async function topUpCard(cardId: string, amount: number) {
-    const updatedCard = await topUpCardRequest(cardId, amount);
+  async function topUpCard(
+    cardId: string,
+    amount: number,
+    context: { transactionUserId: string | number; appUserId?: string },
+  ) {
+    const updatedCard = await topUpCardRequest(cardId, amount, context);
     setCards((currentCards) =>
       currentCards.map((card, index) =>
         card.id === cardId
@@ -95,8 +111,16 @@ export function CardProvider({ children }: { children: ReactNode }) {
     return updatedCard;
   }
 
-  async function deductFare(cardId: string, amount: number) {
-    const updatedCard = await deductFareRequest(cardId, amount);
+  async function deductFare(
+    cardId: string,
+    amount: number,
+    context?: {
+      transactionUserId?: string | number;
+      appUserId?: string;
+      reference?: string;
+    },
+  ) {
+    const updatedCard = await deductFareRequest(cardId, amount, context);
     setCards((currentCards) =>
       currentCards.map((card, index) =>
         card.id === cardId
