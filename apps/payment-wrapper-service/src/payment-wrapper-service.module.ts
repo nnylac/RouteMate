@@ -8,7 +8,10 @@ import * as path from 'path';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [path.join(process.cwd(), '.env')],
+      envFilePath: [
+        path.join(process.cwd(), 'apps', 'payment-wrapper-service', '.env'),
+        path.join(process.cwd(), '.env'),
+      ],
     }),
   ],
   controllers: [PaymentWrapperServiceController],
