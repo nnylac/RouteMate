@@ -9,16 +9,16 @@ export type CardDocument = HydratedDocument<Card>;
 })
 export class Card {
   @Prop({ required: true, trim: true })
-  userId: string;
+  userId!: string;
 
   @Prop({ required: true, unique: true, trim: true })
-  cardNumber: string;
+  cardNumber!: string;
 
   @Prop({ required: true, enum: ['adult', 'student', 'senior'], trim: true })
-  cardType: string;
+  cardType!: string;
 
   @Prop({ required: true, default: 0, min: 0 })
-  balance: number;
+  balance!: number;
 
   @Prop({
     required: true,
@@ -26,7 +26,7 @@ export class Card {
     enum: ['active', 'blocked', 'inactive'],
     trim: true,
   })
-  status: string;
+  status!: string;
 }
 
 export const CardSchema = SchemaFactory.createForClass(Card);

@@ -9,5 +9,5 @@ export class UpdateBalanceDto {
   })
   @IsNumber()
   @Min(0.01)
-  amount: number | undefined;
+  amount!: number;
 }

@@ -12,7 +12,7 @@ import { CreateCardDto } from './dto/create-card.dto';
 export class CardService {
   constructor(
     @InjectModel(Card.name)
-    private readonly cardModel: Model<CardDocument>,
+    private readonly cardModel: Model<Card>,
   ) {}
 
   getHello(): string {
@@ -38,14 +38,14 @@ export class CardService {
   async createCard(createCardDto: CreateCardDto): Promise<CardDocument> {
     const cardNumber = await this.generateUniqueCardNumber();
 
-    const card = new this.cardModel({
+    const card = await this.cardModel.create({
       ...createCardDto,
       cardNumber,
       balance: 0,
       status: 'active',
     });
 
-    return card.save();
+    return card;
   }
 
   async getAllCards(): Promise<CardDocument[]> {

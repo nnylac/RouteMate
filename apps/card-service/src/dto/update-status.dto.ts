@@ -9,5 +9,5 @@ export class UpdateStatusDto {
   })
   @IsString()
   @IsIn(['active', 'blocked', 'inactive'])
-  status: string | undefined;
+  status!: string;
 }
