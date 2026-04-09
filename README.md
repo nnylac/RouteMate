@@ -92,6 +92,7 @@ MONGO_URI=mongodb://<user>:<password>@localhost:27017/route_cache_db?authSource=
 
 
 ```bash
+# load kong configuration
 curl -X POST http://localhost:8081/config -F config=@kong/kong.yml
 ```
 
@@ -102,7 +103,7 @@ docker compose down -v
 docker compose up -d
 ```
 
-## 4. Fare Service Setup (Required)
+## 3. Fare Service Setup (Required)
 The `fare-service` requires fare data (MRT/LRT and trunk bus fares) to be populated in the database before it can function correctly.
 
 If this step is skipped, fare calculations and comparisons will return empty or incorrect results.
@@ -137,7 +138,7 @@ Notes
 * This prototype uses static fare data and does not integrate with real-time external fare APIs
 
 
-## 5. Start Backend Services
+## 4. Start Backend Services
 
 ```bash
 # Start all services at once (recommended)
@@ -151,7 +152,7 @@ nest start user-service --watch
 nest start ride-hailing-aggregator-service --watch
 ```
 
-## 6. Service URLs
+## 5. Service URLs
 
 All external traffic should go through Kong on port **8080**. Direct service ports are for local development only.
 
@@ -172,7 +173,7 @@ All external traffic should go through Kong on port **8080**. Direct service por
 | Notifications | `GET :8080/notification-service/notifications` | :3006 |
 | Route cache | `GET/POST :8080/route-cache` | :3010 |
 
-## 7. Monitoring
+## 6. Monitoring
 
 | Tool | URL | Credentials |
 |---|---|---|
@@ -185,7 +186,7 @@ To view Kong metrics in Grafana, import dashboard ID **7424** (official Kong das
 2. Dashboards → New → Import
 3. Enter ID `7424` → Load → select Prometheus datasource → Import
 
-## 8. Daily Startup Checklist
+## 7. Daily Startup Checklist
 
 ```bash
 # 1. Open Docker Desktop and wait for it to fully start
