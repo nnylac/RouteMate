@@ -25,11 +25,15 @@ routemate/
 ```
 
 ## Tech Stack
-Frontend: React + Typescript
-Backend: NestJS
-Databases: PostgreSQL and MongoDB
-Containerisation: Docker Compose
-Messaging: RabbitMQ
+
+- **Frontend:** React (TypeScript)
+- **Backend:** NestJS (TypeScript)
+- **Databases:** PostgreSQL, MongoDB
+- **Containerisation:** Docker, Docker Compose
+- **Messaging:** RabbitMQ
+- **API Gateway:** Kong
+- **Payments:** Stripe (Payment Intents & Webhooks)
+- **Monitoring:** Prometheus, Grafana
 
 ## Prerequisites
 
