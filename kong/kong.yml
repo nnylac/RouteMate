@@ -288,8 +288,8 @@ services:
     read_timeout: 30000
     write_timeout: 30000
     routes:
-      - name: arrival-timing
-        paths: [/arrival-timing]
+      - name: arrival-timing-timing
+        paths: [/arrival-timing/timing]
         methods: [GET]
         strip_path: false
     plugins:

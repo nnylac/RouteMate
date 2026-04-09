@@ -293,7 +293,18 @@ export class FareComparisonServiceService {
             note: value.reason,
           });
         }
-        continue;
+      } else {
+        segmentsPriced++;
+        totalFare += val.fare ?? 0;
+        breakdown.push({
+          segment_id: val.seg.segment_id,
+          mode: val.seg.mode,
+          transport_mode: val.transportMode,
+          from_stop: val.seg.from_stop,
+          to_stop: val.seg.to_stop,
+          distance_km: val.seg.distance_km,
+          fare: val.fare,
+        });
       }
 
       segmentsPriced++;
