@@ -15,10 +15,13 @@ describe('FareComparisonServiceController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
+  it('/fare/health (GET)', () => {
     return request(app.getHttpServer())
-      .get('/')
+      .get('/fare/health')
       .expect(200)
-      .expect('Hello World!');
+      .expect({
+        status: 'ok',
+        service: 'fare-comparison-service',
+      });
   });
 });
