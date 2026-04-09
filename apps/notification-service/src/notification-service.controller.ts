@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-import { Controller, Get, Post } from '@nestjs/common';
-=======
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import {
   ApiTags,
@@ -10,7 +7,6 @@ import {
   ApiBody,
   ApiExcludeEndpoint,
 } from '@nestjs/swagger';
->>>>>>> 8761b9b (feat: add swagger to all services)
 import { NotificationService } from './notification-service.service';
 import { Notification } from '../schemas/notification-service-schema';
 
@@ -73,6 +69,10 @@ export class NotificationServiceController {
   })
   async getAllNotifications(): Promise<Notification[]> {
     return this.notificationService.getAllNotifications();
+  async getAllNotifications(
+    @Query('userId') userId?: string,
+  ): Promise<Notification[]> {
+    return this.notificationService.getAllNotifications(userId);
   }
 
   @Post('notifications')

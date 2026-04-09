@@ -16,6 +16,7 @@ export class ArrivalTimingServiceController {
     description: 'Arrival timing service is running',
     schema: { example: 'arrival timing service is running' },
   })
+  @Get('health')
   getHello(): string {
     return 'arrival timing service is running';
   }

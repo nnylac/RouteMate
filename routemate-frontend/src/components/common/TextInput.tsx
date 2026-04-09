@@ -1,8 +1,8 @@
-import { InputHTMLAttributes } from 'react';
+import { InputHTMLAttributes, ReactNode } from 'react';
 
 interface TextInputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
-  icon?: string;
+  icon?: ReactNode;
 }
 
 export function TextInput({ label, icon, ...props }: TextInputProps) {

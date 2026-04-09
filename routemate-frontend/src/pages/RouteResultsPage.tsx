@@ -9,7 +9,7 @@ import { TransitBadge } from '@/components/common/TransitBadge';
 import { recentSearches } from '@/data/mockData';
 import { useBookmarkedRoutes } from '@/hooks/useBookmarkedRoutes';
 import { searchRoutes, selectRoute } from '@/lib/journeyApi';
-import type { DetailedRouteOption } from '@/types';
+import type { DetailedRouteOption, SavedRoute } from '@/types';
 
 function renderDurationParts(durationLabel: string) {
   const normalized = durationLabel.trim();
@@ -43,6 +43,38 @@ function formatDuration(minutes: number) {
   }
 
   return `${minutes} min`;
+}
+
+function getModeSummary(option: DetailedRouteOption) {
+  const modes = option.segments
+    .map((segment) => {
+      if (segment.mode === 'BUS') return 'Bus';
+      if (segment.mode === 'MRT') return 'MRT';
+      return null;
+    })
+    .filter((value, index, array): value is string => value !== null && array.indexOf(value) === index);
+
+  return modes.join(' · ') || 'Route';
+}
+
+function toSavedRouteSnapshot(
+  origin: string,
+  destination: string,
+  option: DetailedRouteOption,
+  routeId: number | null,
+): SavedRoute {
+  return {
+    id: `saved-${origin}-${destination}-${option.id}`,
+    routeKey: `${origin}::${destination}::${option.id}`,
+    routeId: routeId !== null ? String(routeId) : undefined,
+    optionId: option.id,
+    modeSummary: getModeSummary(option),
+    from: origin,
+    to: destination,
+    distanceKm: option.totalDistanceKm,
+    durationLabel: `Est ${option.durationLabel}`,
+    fare: Number(option.fare ?? 0),
+  };
 }
 
 export function RouteResultsPage() {
@@ -119,6 +151,7 @@ export function RouteResultsPage() {
         destination={destination}
         busDuration={busDuration}
         rideDuration={rideDuration}
+        routeId={routeId}
       />
 
       <div className="stack-md">
@@ -131,6 +164,7 @@ export function RouteResultsPage() {
         {visibleRouteOptions.map((option) => {
           const routeKey = `${origin}::${destination}::${option.id}`;
           const bookmarked = isBookmarked(routeKey);
+          const savedRouteSnapshot = toSavedRouteSnapshot(origin, destination, option, routeId);
           const targetPath = `/route-details?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&optionId=${encodeURIComponent(option.id)}${routeId !== null ? `&routeId=${encodeURIComponent(String(routeId))}` : ''}`;
 
           return (
@@ -193,7 +227,7 @@ export function RouteResultsPage() {
                 aria-pressed={bookmarked}
                 onClick={(event) => {
                   event.stopPropagation();
-                  toggleBookmark(routeKey);
+                  toggleBookmark(routeKey, savedRouteSnapshot);
                 }}
               >
                 <HugeiconsIcon

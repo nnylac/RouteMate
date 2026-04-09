@@ -4,7 +4,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TransactionServiceController } from './transaction-service.controller';
 import { TransactionService } from './transaction-service.service';
 import { Transaction } from './entities/transaction.entity';
-import { RabbitMQPublisher } from './publisher/rabbitmq.publisher';
 
 @Module({
   imports: [
@@ -29,6 +28,6 @@ import { RabbitMQPublisher } from './publisher/rabbitmq.publisher';
     TypeOrmModule.forFeature([Transaction]),
   ],
   controllers: [TransactionServiceController],
-  providers: [TransactionService, RabbitMQPublisher],
+  providers: [TransactionService],
 })
 export class TransactionServiceModule {}

@@ -3,6 +3,7 @@ export type CardType = 'adult' | 'student' | 'senior';
 
 export interface SavedRoute {
   id: string;
+  routeKey?: string;
   modeSummary: string;
   from: string;
   to: string;
@@ -38,7 +39,12 @@ export interface RouteSegmentDetail {
   distanceKm: number;
   lineOrService: string | null;
   segmentOrder: number;
-  arrivalTiming?: string | null;
+  arrivalTiming?: {
+    line?: string;
+    stop?: string;
+    predictedArrivalMins?: number;
+    source?: string;
+  } | null;
 }
 
 export interface RouteFareByCategory {
@@ -92,4 +98,65 @@ export interface JourneyStop {
   subtitle?: string;
   eta?: string;
   duration?: string;
+}
+
+export interface FareComparisonBreakdownItem {
+  segmentId: number;
+  mode: string;
+  transportMode?: string;
+  fromStop: string | null;
+  toStop: string | null;
+  distanceKm: number;
+  fare: number | null;
+  note?: string;
+}
+
+export interface FareComparisonRideQuote {
+  provider: string;
+  price: number;
+  eta: number;
+  route?: string;
+  bookingLink?: string;
+  pricePerPerson?: number;
+}
+
+export interface FareComparisonResult {
+  routeId: number;
+  origin: string;
+  destination: string;
+  groupSize: number;
+  fareCategory: 'adult_card' | 'student_card' | 'senior_card';
+  publicTransport: {
+    mode: string;
+    totalDurationMins: number;
+    totalDistanceKm: number;
+    transferCount: number;
+    farePerPerson: number;
+    fareBreakdown: FareComparisonBreakdownItem[];
+    segmentsPriced: number;
+    segmentsSkipped: number;
+    selectedOption: DetailedRouteOption;
+  };
+  rideHailing: {
+    metadata: {
+      totalOptions: number;
+      cheapestProvider: string;
+      fastestProvider: string;
+    } | null;
+    quotes: FareComparisonRideQuote[];
+    providerUnavailable?: boolean;
+    groupSizeNote?: string;
+  };
+  filters: {
+    cheapest: {
+      mode: string;
+      provider: string;
+      price: number;
+    };
+    fastest: {
+      mode: string;
+      provider: string;
+      durationMins: number;
+    };
+  };
 }

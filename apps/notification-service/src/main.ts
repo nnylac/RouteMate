@@ -3,6 +3,7 @@ import { NotificationServiceModule } from './notification-service.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { startNotificationConsumer } from './rabbitmq.consumer';
+import { NotificationService } from './notification-service.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(NotificationServiceModule);
@@ -39,6 +40,6 @@ async function bootstrap() {
   await app.startAllMicroservices();
   await app.listen(process.env.PORT ?? 3006);
 
-  await startNotificationConsumer();
+  await startNotificationConsumer(app.get(NotificationService));
 }
 bootstrap();

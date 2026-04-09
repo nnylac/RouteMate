@@ -23,7 +23,8 @@ export function TopUpSuccessPage() {
       </div>
       <h1 className="success-title">Top Up Successful</h1>
       <p className="success-subtitle">
-        {latestTopUpAmount !== null ? `Added $${latestTopUpAmount.toFixed(2)}. ` : ''}
+        {latestTopUpAmount !== null ? `Added $${latestTopUpAmount.toFixed(2)}.` : ''}
+        <br />
         Updated Balance: ${currentCard ? currentCard.balance.toFixed(2) : '--'}
       </p>
 

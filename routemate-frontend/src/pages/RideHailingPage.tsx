@@ -18,9 +18,11 @@ export function RideHailingPage() {
   const [searchParams] = useSearchParams();
   const origin = searchParams.get('origin') ?? 'Jurong East';
   const destination = searchParams.get('destination') ?? 'SMU';
+  const initialRouteId = searchParams.get('routeId');
   const [busDuration, setBusDuration] = useState<string | null>(null);
   const [rideDuration, setRideDuration] = useState<string | null>(null);
   const [rideHailingOptions, setRideHailingOptions] = useState<RideQuote[]>([]);
+  const [routeId, setRouteId] = useState<string | null>(initialRouteId);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -45,6 +47,7 @@ export function RideHailingPage() {
 
       if (routeResult.status === 'fulfilled') {
         const routeResponse = routeResult.value;
+        setRouteId(String(routeResponse.route_id));
 
         if (routeResponse.quickestDuration !== null) {
           setBusDuration(formatDuration(routeResponse.quickestDuration));
@@ -88,6 +91,7 @@ export function RideHailingPage() {
         destination={destination}
         busDuration={busDuration}
         rideDuration={rideDuration}
+        routeId={routeId}
       />
 
       <div className="stack-md">

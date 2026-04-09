@@ -3,6 +3,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Notification } from '../schemas/notification-service-schema';
 
+interface NotificationEventPayload {
+  event?: string;
+  userId?: string | number;
+  cardId?: string;
+  amount?: number;
+  failureReason?: string;
+}
+
 @Injectable()
 export class NotificationService {
   constructor(
@@ -26,7 +34,86 @@ export class NotificationService {
     return notification.save();
   }
 
-  async getAllNotifications(): Promise<Notification[]> {
-    return this.notificationModel.find().exec();
+  async getAllNotifications(userId?: string): Promise<Notification[]> {
+    const query = userId ? { userId } : {};
+    return this.notificationModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  async createFromEvent(payload: NotificationEventPayload): Promise<Notification | null> {
+    if (payload.userId === undefined || payload.userId === null) {
+      return null;
+    }
+
+    const userId = String(payload.userId);
+    const amountLabel =
+      typeof payload.amount === 'number' ? `$${payload.amount.toFixed(2)}` : null;
+
+    const notificationContent = this.mapEventToNotification(payload, amountLabel);
+    if (!notificationContent) {
+      return null;
+    }
+
+    const notification = new this.notificationModel({
+      userId,
+      type: notificationContent.type,
+      title: notificationContent.title,
+      message: notificationContent.message,
+      isRead: false,
+    });
+
+    return notification.save();
+  }
+
+  private mapEventToNotification(
+    payload: NotificationEventPayload,
+    amountLabel: string | null,
+  ) {
+    switch (payload.event) {
+      case 'card.topup.success':
+        return {
+          type: 'card_topup_success',
+          title: 'Top-Up Successful',
+          message: amountLabel
+            ? `Card top-up successful for ${amountLabel}.`
+            : 'Card top-up successful.',
+        };
+      case 'card.topup.failed':
+        return {
+          type: 'card_topup_failed',
+          title: 'Top-Up Failed',
+          message: payload.failureReason
+            ? `Card top-up failed: ${payload.failureReason}.`
+            : 'Card top-up failed.',
+        };
+      case 'card.topup.rollback':
+        return {
+          type: 'card_topup_rollback',
+          title: 'Top-Up Reversed',
+          message: amountLabel
+            ? `Card top-up for ${amountLabel} was rolled back.`
+            : 'Card top-up was rolled back.',
+        };
+      case 'card.deduction.success':
+        return {
+          type: 'card_deduction_success',
+          title: 'Fare Deducted',
+          message: amountLabel
+            ? `Fare deduction successful for ${amountLabel}.`
+            : 'Fare deduction successful.',
+        };
+      case 'card.deduction.failed':
+        return {
+          type: 'card_deduction_failed',
+          title: 'Fare Deduction Failed',
+          message: payload.failureReason
+            ? `Fare deduction failed: ${payload.failureReason}.`
+            : 'Fare deduction failed.',
+        };
+      default:
+        return null;
+    }
   }
 }

@@ -288,6 +288,10 @@ export class CardOrchestratorServiceController {
     body: {
       status: 'pending' | 'success' | 'failed' | 'rolled_back';
       failureReason?: string;
+      transactionType?: 'top_up' | 'payment' | 'refund';
+      cardId?: string;
+      userId?: string | number;
+      amount?: number;
     },
   ) {
     return this.cardOrchestratorServiceService.updateTransactionStatus(Number(transactionId), body);

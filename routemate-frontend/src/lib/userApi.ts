@@ -5,6 +5,7 @@ export interface User {
   fullName: string;
   email: string;
   username: string;
+  phoneNumber?: string;
   isActive: boolean;
   transactionUserId?: number;
   outsystemsUserId?: number;

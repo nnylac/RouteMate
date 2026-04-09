@@ -22,7 +22,7 @@ import {
 } from '@/lib/cardApi';
 import { searchRoutes } from '@/lib/journeyApi';
 import { saveTransactionMetadata } from '@/lib/transactionHistoryStorage';
-import type { DetailedRouteOption, RouteBadge, RouteSegmentDetail } from '@/types';
+import type { DetailedRouteOption, RouteBadge, RouteSegmentDetail, SavedRoute } from '@/types';
 
 interface SegmentCardData {
   id: string;
@@ -39,9 +39,6 @@ interface SegmentCardData {
   arrivalTimeLabel?: string;
   detailRows: string[];
 }
-
-const HEADER_TIME_LABEL = '4:40 PM';
-const HARD_CODED_ARRIVAL_WAIT_MINS = 2;
 
 function formatDurationLabel(minutes: number) {
   return `${minutes} min${minutes === 1 ? '' : 's'}`;
@@ -75,6 +72,18 @@ function getTransactionTitle(option: DetailedRouteOption) {
   return modes.join(' · ') || 'Public Transport';
 }
 
+function getSavedRouteModeSummary(option: DetailedRouteOption) {
+  const modes = option.segments
+    .map((segment) => {
+      if (segment.mode === 'MRT') return 'MRT';
+      if (segment.mode === 'BUS') return 'Bus';
+      return null;
+    })
+    .filter((value, index, array): value is string => value !== null && array.indexOf(value) === index);
+
+  return modes.join(' · ') || 'Route';
+}
+
 function formatClockTime(totalMinutes: number) {
   const minutesInDay = 24 * 60;
   const normalized = ((totalMinutes % minutesInDay) + minutesInDay) % minutesInDay;
@@ -83,6 +92,35 @@ function formatClockTime(totalMinutes: number) {
   const period = hours24 >= 12 ? 'PM' : 'AM';
   const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
   return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+}
+
+function getCurrentSingaporeTime() {
+  const formatter = new Intl.DateTimeFormat('en-SG', {
+    timeZone: 'Asia/Singapore',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  const parts = formatter.formatToParts(new Date());
+  const hourPart = parts.find((part) => part.type === 'hour')?.value ?? '12';
+  const minutePart = parts.find((part) => part.type === 'minute')?.value ?? '00';
+  const dayPeriod = parts.find((part) => part.type === 'dayPeriod')?.value?.toUpperCase() ?? 'AM';
+  const hourValue = Number(hourPart);
+  const normalizedHour = Number.isFinite(hourValue) ? hourValue : 12;
+  const hours24 =
+    dayPeriod === 'PM'
+      ? normalizedHour % 12 + 12
+      : normalizedHour % 12;
+
+  return {
+    label: `${hourPart}:${minutePart} ${dayPeriod}`,
+    totalMinutes: hours24 * 60 + Number(minutePart),
+  };
+}
+
+function getArrivalWaitMinutes(segment: RouteSegmentDetail) {
+  return segment.arrivalTiming?.predictedArrivalMins ?? null;
 }
 
 function getHeaderBadges(option: DetailedRouteOption): RouteBadge[] {
@@ -109,6 +147,7 @@ function buildSegmentCards(
   origin: string,
   destination: string,
   segments: RouteSegmentDetail[],
+  headerTimeTotalMins: number,
 ): SegmentCardData[] {
   let cumulativeMinutesBeforeSegment = 0;
 
@@ -138,6 +177,7 @@ function buildSegmentCards(
     }
 
     const directionLabel = segment.toStop ?? destination;
+    const arrivalWaitMins = getArrivalWaitMinutes(segment);
     const lineBadge = segment.mode === 'MRT'
       ? { kind: 'mrt' as const, value: segment.lineOrService ?? segment.mode }
       : segment.mode === 'BUS'
@@ -155,10 +195,16 @@ function buildSegmentCards(
       isFirst: index === 0,
       isFinal,
       isWalk: false,
-      arrivalBadgeLabel: `In ${HARD_CODED_ARRIVAL_WAIT_MINS} min`,
-      arrivalTimeLabel: `At ${formatClockTime(
-        16 * 60 + 40 + minutesBeforeSegment + HARD_CODED_ARRIVAL_WAIT_MINS,
-      )}`,
+      arrivalBadgeLabel:
+        arrivalWaitMins !== null ? `In ${arrivalWaitMins} min` : undefined,
+      arrivalTimeLabel:
+        arrivalWaitMins !== null
+          ? `At ${formatClockTime(
+              headerTimeTotalMins +
+                minutesBeforeSegment +
+                arrivalWaitMins,
+            )}`
+          : undefined,
       detailRows: [
         directionLabel,
         `Distance ${segment.distanceKm.toFixed(2)} km`,
@@ -270,12 +316,14 @@ export function RouteDetailsPageCurrent() {
   const origin = searchParams.get('origin') ?? 'Jurong East';
   const destination = searchParams.get('destination') ?? 'SMU';
   const optionId = searchParams.get('optionId');
+  const routeId = searchParams.get('routeId');
   const [routeOptions, setRouteOptions] = useState<DetailedRouteOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedCardIds, setExpandedCardIds] = useState<string[]>([]);
   const [isCompletingJourney, setIsCompletingJourney] = useState(false);
   const [journeyError, setJourneyError] = useState('');
   const { isBookmarked, toggleBookmark } = useBookmarkedRoutes();
+  const currentSingaporeTime = useMemo(() => getCurrentSingaporeTime(), []);
 
   useEffect(() => {
     let isCancelled = false;
@@ -324,12 +372,38 @@ export function RouteDetailsPageCurrent() {
 
   const routeKey = selectedRoute ? `${origin}::${destination}::${selectedRoute.id}` : null;
   const bookmarked = routeKey ? isBookmarked(routeKey) : false;
+  const selectedSavedRoute = useMemo<SavedRoute | null>(() => {
+    if (!selectedRoute || !routeKey) {
+      return null;
+    }
+
+    return {
+      id: `saved-${origin}-${destination}-${selectedRoute.id}`,
+      routeKey,
+      routeId: routeId ?? undefined,
+      optionId: selectedRoute.id,
+      modeSummary: getSavedRouteModeSummary(selectedRoute),
+      from: origin,
+      to: destination,
+      distanceKm: selectedRoute.totalDistanceKm,
+      durationLabel: `Est ${selectedRoute.durationLabel}`,
+      fare: Number(selectedRoute.fare ?? 0),
+    };
+  }, [destination, origin, routeId, routeKey, selectedRoute]);
   const currentBalance = cards[0]?.balance ?? 0;
   const currentCard = cards[0];
 
   const segmentCards = useMemo(
-    () => (selectedRoute ? buildSegmentCards(origin, destination, selectedRoute.segments) : []),
-    [destination, origin, selectedRoute],
+    () =>
+      selectedRoute
+        ? buildSegmentCards(
+            origin,
+            destination,
+            selectedRoute.segments,
+            currentSingaporeTime.totalMinutes,
+          )
+        : [],
+    [currentSingaporeTime.totalMinutes, destination, origin, selectedRoute],
   );
 
   useEffect(() => {
@@ -386,12 +460,16 @@ export function RouteDetailsPageCurrent() {
         routeBreakdown: selectedRoute,
       });
       await deductFare(currentCard.id, selectedRoute.fare);
-
       await updateTransactionStatusRequest(transactionId, {
         status: 'success',
+        transactionType: 'payment',
+        cardId: currentCard.id,
+        userId: storedUser.id,
+        amount: selectedRoute.fare,
       });
 
       navigate('/journey-complete', {
+        replace: true,
         state: {
           cardId: currentCard.id,
           fareAmount: selectedRoute.fare,
@@ -406,6 +484,10 @@ export function RouteDetailsPageCurrent() {
           await updateTransactionStatusRequest(transactionId, {
             status: 'failed',
             failureReason: message,
+            transactionType: 'payment',
+            cardId: currentCard.id,
+            userId: storedUser.id,
+            amount: selectedRoute.fare,
           });
         } catch {
           // Preserve the original deduction error if transaction update fails.
@@ -432,19 +514,19 @@ export function RouteDetailsPageCurrent() {
             aria-pressed={bookmarked}
             onClick={() => {
               if (routeKey) {
-                toggleBookmark(routeKey);
+                toggleBookmark(routeKey, selectedSavedRoute ?? undefined);
               }
             }}
           >
             <HugeiconsIcon
               icon={Bookmark02Icon}
-              size={18}
+              size={20}
               strokeWidth={1.8}
               fill={bookmarked ? 'currentColor' : 'none'}
             />
           </button>
           <span className="route-header-inline__separator">·</span>
-          <span>{HEADER_TIME_LABEL}</span>
+          <span>{currentSingaporeTime.label}</span>
           <span className="route-header-inline__separator">·</span>
           <span>{formatDurationSummary(selectedRoute.totalDurationMins)}</span>
           <span className="route-header-inline__separator">·</span>
@@ -487,7 +569,11 @@ export function RouteDetailsPageCurrent() {
           <>
             <div className="route-detail-summary">
               <div>Trip Fare: ${selectedRoute.fare?.toFixed(2) ?? '0.00'}</div>
-              <div>Current Balance (before deduction): ${currentBalance.toFixed(2)}</div>
+              <div>
+                {isCompletingJourney
+                  ? 'Completing journey...'
+                  : `Current Balance (before deduction): $${currentBalance.toFixed(2)}`}
+              </div>
             </div>
 
             {journeyError ? <div className="muted-caption">{journeyError}</div> : null}
