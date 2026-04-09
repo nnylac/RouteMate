@@ -1,6 +1,6 @@
 import { Alert01Icon, CheckmarkCircle03Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { LoginPage } from '@/pages/LoginPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { SignUpPageConnected } from '@/pages/SignUpPageConnected';
@@ -28,6 +28,7 @@ import { connectNotificationSocket, disconnectNotificationSocket } from '@/lib/n
 
 export function AppRouter() {
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const user = readStoredUser();
@@ -44,6 +45,7 @@ export function AppRouter() {
     }
 
     const handleNotification = (notification: {
+      _id?: string;
       type?: string;
       title?: string;
       message?: string;
@@ -58,6 +60,23 @@ export function AppRouter() {
             className={`notification-toast ${
               isFailure ? 'notification-toast--error' : ''
             } ${toastInstance.visible ? 'notification-toast--visible' : ''}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => {
+              toast.dismiss(toastInstance.id);
+              navigate('/notifications', {
+                state: { highlightedNotification: notification },
+              });
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toast.dismiss(toastInstance.id);
+                navigate('/notifications', {
+                  state: { highlightedNotification: notification },
+                });
+              }
+            }}
           >
             <div className="notification-toast__icon" aria-hidden="true">
               {isFailure ? (
@@ -87,7 +106,7 @@ export function AppRouter() {
     return () => {
       socket.off('notification.created', handleNotification);
     };
-  }, [location.pathname]);
+  }, [location.pathname, navigate]);
   
   return (
     <Routes>

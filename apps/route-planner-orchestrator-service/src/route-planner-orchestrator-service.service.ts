@@ -68,7 +68,8 @@ export class RoutePlannerOrchestratorServiceService {
 
   private mapMainMode(mainMode: string): string {
     if (mainMode === 'WALKING') return 'WALK';
-    if (['SUBWAY', 'BUS', 'RAIL', 'TRAM', 'MRT'].includes(mainMode)) return 'PUBLIC_TRANSPORT';
+    if (['SUBWAY', 'BUS', 'RAIL', 'TRAM', 'MRT'].includes(mainMode))
+      return 'PUBLIC_TRANSPORT';
     return 'PUBLIC_TRANSPORT';
   }
 
@@ -108,7 +109,10 @@ export class RoutePlannerOrchestratorServiceService {
     }
 
     const response = await firstValueFrom(
-      this.httpService.post(`${FARE_SERVICE_URL}/fare-service/calculate`, payload),
+      this.httpService.post(
+        `${FARE_SERVICE_URL}/fare-service/calculate`,
+        payload,
+      ),
     );
 
     return Number(response.data?.fareAmount ?? 0);
@@ -191,7 +195,9 @@ export class RoutePlannerOrchestratorServiceService {
         distance_km: segment.distance_km,
         cumulative_distance_km: Number(cumulativeDistanceKm.toFixed(2)),
         fare_basis_mode: fareBasisMode,
-        fares: Object.fromEntries(faresByCategory) as SegmentFareBreakdown['fares'],
+        fares: Object.fromEntries(
+          faresByCategory,
+        ) as SegmentFareBreakdown['fares'],
       });
     }
 
@@ -239,16 +245,23 @@ export class RoutePlannerOrchestratorServiceService {
               };
 
               let arrival_timing = null;
-              if (segment.mode === 'TRANSIT' && segment.from_stop && segment.line_or_service) {
+              if (
+                segment.mode === 'TRANSIT' &&
+                segment.from_stop &&
+                segment.line_or_service
+              ) {
                 try {
                   const timingResponse = await firstValueFrom(
-                    this.httpService.get(`${ARRIVAL_TIMING_URL}/arrival-timing`, {
-                      params: {
-                        line: segment.line_or_service,
-                        stop: segment.from_stop,
-                        mode: option.main_mode,
+                    this.httpService.get(
+                      `${ARRIVAL_TIMING_URL}/arrival-timing`,
+                      {
+                        params: {
+                          line: segment.line_or_service,
+                          stop: segment.from_stop,
+                          mode: option.main_mode,
+                        },
                       },
-                    }),
+                    ),
                   );
                   arrival_timing = timingResponse.data;
                 } catch {
@@ -365,11 +378,11 @@ export class RoutePlannerOrchestratorServiceService {
 
   async handleDisruption(route_id: number, disrupted_line: string) {
     try {
-      const routeResponse = await firstValueFrom(
+      const routeResponse = (await firstValueFrom(
         this.httpService.get(`${ROUTE_CACHE_URL}/route-cache/by-route-id`, {
           params: { route_id },
         }),
-      ) as any;
+      )) as any;
       const route = routeResponse.data;
 
       const affectedOption = route.route_options?.find(
@@ -388,11 +401,9 @@ export class RoutePlannerOrchestratorServiceService {
       }
 
       await firstValueFrom(
-        this.httpService.patch(
-          `${ROUTE_CACHE_URL}/route-cache/disrupt`,
-          null,
-          { params: { route_id } },
-        ),
+        this.httpService.patch(`${ROUTE_CACHE_URL}/route-cache/disrupt`, null, {
+          params: { route_id },
+        }),
       );
 
       (this.rabbitClient as any).emit('route.disrupted', {
@@ -416,7 +427,9 @@ export class RoutePlannerOrchestratorServiceService {
           ),
         );
       } catch (notifError) {
-        console.warn('Notification HTTP call failed, RabbitMQ event was published');
+        console.warn(
+          'Notification HTTP call failed, RabbitMQ event was published',
+        );
       }
 
       return {
@@ -424,7 +437,8 @@ export class RoutePlannerOrchestratorServiceService {
         affected: true,
         disrupted_line,
         user_id: route.user_id,
-        action: 'Route unlocked, user notified via RabbitMQ and notification-service',
+        action:
+          'Route unlocked, user notified via RabbitMQ and notification-service',
       };
     } catch (error) {
       console.error('handleDisruption error:', error?.response?.data ?? error);

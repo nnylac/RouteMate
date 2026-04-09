@@ -7,19 +7,7 @@ import { PageTopBar } from '@/components/common/PageTopBar';
 import { TopUpCardPreview } from '@/components/common/TopUpCardPreview';
 import { useCards } from '@/context/CardContext';
 import { readStoredUser } from '@/lib/authStorage';
-import {
-  createTransactionRequest,
-  updateTransactionStatusRequest,
-} from '@/lib/cardApi';
-import {
-  confirmPaymentIntent,
-  createPaymentIntent,
-  createRefund,
-} from '@/lib/paymentApi';
-import {
-  saveTransactionMetadata,
-  updateTransactionMetadataStatus,
-} from '@/lib/transactionHistoryStorage';
+import { saveTransactionMetadata } from '@/lib/transactionHistoryStorage';
 
 const amounts = [10, 20, 30, 50, 100];
 
@@ -88,13 +76,6 @@ export function TopUpPageConnected() {
     }
 
     setIsSubmitting(true);
-    let transactionId: number | null = null;
-    let paymentSucceeded = false;
-    let cardBalanceUpdated = false;
-    let transactionSyncWarning = false;
-    let paymentIntentId: string | null = null;
-    let transactionUserId: string | number | null = null;
-    let appUserId: string | null = null;
 
     try {
       const storedUser = readStoredUser();
@@ -103,163 +84,36 @@ export function TopUpPageConnected() {
         throw new Error('No signed-in user found. Please log in again.');
       }
 
-      appUserId = storedUser.id;
-
       if (!storedUser.transactionUserId) {
         throw new Error('No signed-in user ID found for this account. Please log in again.');
       }
 
-      const userId = storedUser.transactionUserId;
-      transactionUserId = userId;
+      const updatedCard = await topUpCard(currentCard.id, parsedAmount, {
+        transactionUserId: storedUser.transactionUserId,
+        appUserId: storedUser.id,
+      });
 
-      try {
-        const transaction = await createTransactionRequest({
-          userId,
+      if (updatedCard.transactionId) {
+        saveTransactionMetadata({
+          transactionId: updatedCard.transactionId,
           cardId: currentCard.id,
-          amount: parsedAmount,
-          transactionType: 'top_up',
-          status: 'pending',
+          category: 'Top Up',
+          title: 'Top Up',
+          route: 'Card top up',
+          status: 'success',
         });
-
-        if (transaction.Id && transaction.Id > 0) {
-          transactionId = transaction.Id;
-          saveTransactionMetadata({
-            transactionId: transaction.Id,
-            cardId: currentCard.id,
-            category: 'Top Up',
-            title: 'Top Up',
-            route: 'Card top up',
-            status: 'pending',
-          });
-        } else {
-          transactionSyncWarning = true;
-        }
-      } catch {
-        transactionSyncWarning = true;
-      }
-
-      const paymentIntent = await createPaymentIntent({
-        amount: parsedAmount,
-        currency: 'sgd',
-        metadata: {
-          userId: String(userId),
-          cardId: currentCard.id,
-          transactionId: transactionId !== null ? String(transactionId) : 'pending-sync',
-        },
-      });
-      paymentIntentId = paymentIntent.paymentIntentId;
-
-      const confirmation = await confirmPaymentIntent({
-        paymentIntentId: paymentIntent.paymentIntentId,
-        paymentMethod: 'pm_card_visa',
-      });
-
-      if (confirmation.status !== 'succeeded') {
-        throw new Error(`Payment failed with status: ${confirmation.status}`);
-      }
-      paymentSucceeded = true;
-      const updatedCard = await topUpCard(currentCard.id, parsedAmount);
-      cardBalanceUpdated = true;
-
-      if (transactionId !== null) {
-        try {
-          await updateTransactionStatusRequest(transactionId, {
-            status: 'success',
-            transactionType: 'top_up',
-            cardId: currentCard.id,
-            userId: appUserId ?? userId,
-            amount: parsedAmount,
-            balance: updatedCard.balance,
-          });
-          updateTransactionMetadataStatus(transactionId, 'success');
-        } catch {
-          transactionSyncWarning = true;
-        }
       }
 
       navigate('/top-up-success', {
         state: {
           cardId: currentCard.id,
-          transactionWarning: transactionSyncWarning
-            ? 'Top-up succeeded, but transaction status could not be synced.'
-            : undefined,
+          transactionWarning: updatedCard.transactionWarning,
         },
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to top up card.';
-
-      if (paymentSucceeded && !cardBalanceUpdated && paymentIntentId) {
-        try {
-          const refund = await createRefund({
-            paymentIntentId,
-            amount: parsedAmount,
-          });
-
-          if (refund.status !== 'succeeded') {
-            throw new Error(`Refund failed with status: ${refund.status}`);
-          }
-
-          if (transactionId !== null) {
-            try {
-              await updateTransactionStatusRequest(transactionId, {
-                status: 'rolled_back',
-                failureReason: message,
-                transactionType: 'top_up',
-                cardId: currentCard.id,
-                userId: appUserId ?? transactionUserId ?? '',
-                amount: parsedAmount,
-              });
-              updateTransactionMetadataStatus(transactionId, 'rolled_back');
-            } catch {
-              // Keep the original refund/callback error visible if transaction patch fails.
-            }
-          }
-
-          setAmountError('Top-up could not be applied to your card. Your Stripe payment was refunded.');
-          return;
-        } catch (refundError) {
-          const refundMessage =
-            refundError instanceof Error
-              ? refundError.message
-              : 'Payment succeeded, but refund failed.';
-
-          if (transactionId !== null) {
-            try {
-              await updateTransactionStatusRequest(transactionId, {
-                status: 'failed',
-                failureReason: `${message} Refund error: ${refundMessage}`,
-                transactionType: 'top_up',
-                cardId: currentCard.id,
-                userId: appUserId ?? transactionUserId ?? '',
-                amount: parsedAmount,
-              });
-              updateTransactionMetadataStatus(transactionId, 'failed');
-            } catch {
-              // Keep the original refund failure visible if transaction patch fails.
-            }
-          }
-
-          setAmountError(`Payment was charged, but refund failed. ${refundMessage}`);
-          return;
-        }
-      }
-
-      if (transactionId !== null) {
-        try {
-          await updateTransactionStatusRequest(transactionId, {
-            status: 'failed',
-            failureReason: message,
-            transactionType: 'top_up',
-            cardId: currentCard.id,
-            userId: appUserId ?? transactionUserId ?? '',
-            amount: parsedAmount,
-          });
-          updateTransactionMetadataStatus(transactionId, 'failed');
-        } catch {
-          // Keep the original top-up error visible if transaction patch fails.
-        }
-      }
-      setAmountError(message);
+      setAmountError(
+        error instanceof Error ? error.message : 'Unable to top up card.',
+      );
     } finally {
       setIsSubmitting(false);
     }

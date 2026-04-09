@@ -28,4 +28,4 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3009);
   console.log('Wrapper running on port 3009');
 }
-bootstrap();
+void bootstrap();

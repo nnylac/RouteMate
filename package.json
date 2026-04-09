@@ -8,10 +8,10 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
-    "start": "nest start",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/apps/api-gateway/main",
+    "start": "nest start user-service",
+    "start:dev": "nest start user-service --watch",
+    "start:debug": "nest start user-service --debug --watch",
+    "start:prod": "node dist/apps/user-service/main",
     "start:card-orchestrator-service": "nest start card-orchestrator-service --watch",
     "start:card-service": "nest start card-service --watch",
     "start:fare-comparison-service": "nest start fare-comparison-service --watch",
@@ -19,7 +19,6 @@
     "start:maps-wrapper-service": "nest start maps-wrapper-service --watch",
     "start:notification-service": "nest start notification-service --watch",
     "start:payment-wrapper-service": "nest start payment-wrapper-service --watch",
-    "start:transaction-service": "nest start transaction-service --watch",
     "start:ride-hailing-aggregator-service": "nest start ride-hailing-aggregator-service --watch",
     "start:ride-hailing-wrapper-service": "nest start ride-hailing-wrapper-service --watch",
     "start:ride-hailing-mocked-api": "json-server apps/ride-hailing-mocked-api/db.json --port 4000",
@@ -27,13 +26,13 @@
     "start:user-service": "nest start user-service --watch",
     "start:arrival-timing-service": "nest start arrival-timing-service --watch",
     "start:route-planner-orchestrator-service": "nest start route-planner-orchestrator-service --watch",
-    "start:all": "concurrently \"npm run start\" \"npm run start:card-orchestrator-service\" \"npm run start:card-service\" \"npm run start:fare-comparison-service\" \"npm run start:fare-service\" \"npm run start:maps-wrapper-service\" \"npm run start:notification-service\" \"npm run start:payment-wrapper-service\" \"npm run start:transaction-service\" \"npm run start:ride-hailing-aggregator-service\" \"npm run start:ride-hailing-wrapper-service\" \"npm run start:ride-hailing-mocked-api\" \"npm run start:route-cache-service\" \"npm run start:user-service\" \"npm run start:arrival-timing-service\" \"npm run start:route-planner-orchestrator-service\"",
+    "start:all": "concurrently \"npm run start\" \"npm run start:card-orchestrator-service\" \"npm run start:card-service\" \"npm run start:fare-comparison-service\" \"npm run start:fare-service\" \"npm run start:maps-wrapper-service\" \"npm run start:notification-service\" \"npm run start:payment-wrapper-service\" \"npm run start:ride-hailing-aggregator-service\" \"npm run start:ride-hailing-wrapper-service\" \"npm run start:ride-hailing-mocked-api\" \"npm run start:route-cache-service\" \"npm run start:arrival-timing-service\" \"npm run start:route-planner-orchestrator-service\"",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./apps/api-gateway/test/jest-e2e.json"
+    "test:e2e": "jest"
   },
   "dependencies": {
     "@googlemaps/google-maps-services-js": "^3.4.2",

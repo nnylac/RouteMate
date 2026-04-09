@@ -101,3 +101,16 @@ returns:
   }
 }
 ```
+
+7. Stripe webhook reconciliation
+```POST http://localhost:3007/payment/webhook```
+
+Notes:
+- This endpoint is intended for Stripe webhook delivery, not manual browser calls.
+- `rawBody` is enabled in the Nest bootstrap so Stripe signature verification works correctly.
+- The webhook reconciles OutSystems transaction status using `paymentIntent.metadata.transactionId`.
+- Current event handling:
+  - `payment_intent.succeeded` -> marks transaction `success`
+  - `payment_intent.payment_failed` -> marks transaction `failed`
+  - `payment_intent.canceled` -> marks transaction `failed`
+- Rollback/refund is still owned by `card-orchestrator-service` during the main top-up flow.

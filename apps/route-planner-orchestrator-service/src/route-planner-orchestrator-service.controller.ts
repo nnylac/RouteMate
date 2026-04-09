@@ -69,7 +69,11 @@ export class RoutePlannerOrchestratorServiceController {
     @Body('origin') origin: string,
     @Body('destination') destination: string,
   ) {
-    return this.routePlannerOrchestratorServiceService.searchRoutes(user_id, origin, destination);
+    return this.routePlannerOrchestratorServiceService.searchRoutes(
+      user_id,
+      origin,
+      destination,
+    );
   }
 
   @Patch('select')
@@ -216,6 +220,9 @@ export class RoutePlannerOrchestratorServiceController {
     @Body('route_id') route_id: number,
     @Body('disrupted_line') disrupted_line: string,
   ) {
-    return this.routePlannerOrchestratorServiceService.handleDisruption(route_id, disrupted_line);
+    return this.routePlannerOrchestratorServiceService.handleDisruption(
+      route_id,
+      disrupted_line,
+    );
   }
 }

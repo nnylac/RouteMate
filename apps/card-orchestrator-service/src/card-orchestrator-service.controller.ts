@@ -127,8 +127,22 @@ export class CardOrchestratorServiceController {
   })
   @ApiBody({
     schema: {
-      example: { amount: 20.0 },
-      properties: { amount: { type: 'number', example: 20.00 } },
+      example: {
+        amount: 20.0,
+        transactionUserId: '12345',
+        appUserId: '6614a2f3c9b1234567890abc',
+      },
+      properties: {
+        amount: { type: 'number', example: 20.0 },
+        transactionUserId: {
+          oneOf: [{ type: 'string' }, { type: 'number' }],
+          example: '12345',
+        },
+        appUserId: {
+          type: 'string',
+          example: '6614a2f3c9b1234567890abc',
+        },
+      },
     },
   })
   @ApiResponse({
@@ -154,17 +168,54 @@ export class CardOrchestratorServiceController {
       },
     },
   })
-  async topUpCard(@Param('id') id: string, @Body() body: { amount: number }) {
-    return this.cardOrchestratorServiceService.topUpCard(id, body.amount);
+  async topUpCard(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      amount: number;
+      transactionUserId?: string | number;
+      appUserId?: string;
+    },
+  ) {
+    return this.cardOrchestratorServiceService.topUpCard(id, body.amount, {
+      transactionUserId: body.transactionUserId,
+      appUserId: body.appUserId,
+    });
   }
 
   @Patch('cards/:id/deduct')
-  @ApiOperation({ summary: 'Deduct fare from card' })
-  @ApiParam({ name: 'id', description: 'MongoDB card _id', example: '6614a2f3c9b1234567890abc' })
+  @ApiOperation({
+    summary:
+      'Deduct fare from card and sync journey transaction when context is provided',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'MongoDB card _id',
+    example: '6614a2f3c9b1234567890abc',
+  })
   @ApiBody({
     schema: {
-      example: { amount: 1.5 },
-      properties: { amount: { type: 'number', example: 1.50 } },
+      example: {
+        amount: 1.5,
+        transactionUserId: '12345',
+        appUserId: '6614a2f3c9b1234567890abc',
+        reference: 'journey_6614a2f3c9b1234567890abc_route123_1775765653629',
+      },
+      properties: {
+        amount: { type: 'number', example: 1.5 },
+        transactionUserId: {
+          oneOf: [{ type: 'string' }, { type: 'number' }],
+          example: '12345',
+        },
+        appUserId: {
+          type: 'string',
+          example: '6614a2f3c9b1234567890abc',
+        },
+        reference: {
+          type: 'string',
+          example: 'journey_6614a2f3c9b1234567890abc_route123_1775765653629',
+        },
+      },
     },
   })
   @ApiResponse({
@@ -190,8 +241,21 @@ export class CardOrchestratorServiceController {
       },
     },
   })
-  async deductFare(@Param('id') id: string, @Body() body: { amount: number }) {
-    return this.cardOrchestratorServiceService.deductFare(id, body.amount);
+  async deductFare(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      amount: number;
+      transactionUserId?: string | number;
+      appUserId?: string;
+      reference?: string;
+    },
+  ) {
+    return this.cardOrchestratorServiceService.deductFare(id, body.amount, {
+      transactionUserId: body.transactionUserId,
+      appUserId: body.appUserId,
+      reference: body.reference,
+    });
   }
 
   @Post('transactions')
@@ -228,7 +292,9 @@ export class CardOrchestratorServiceController {
     },
   })
   @ApiResponse({ status: 201, description: 'Transaction created successfully' })
-  async createTransaction(@Body() body: {
+  async createTransaction(
+    @Body()
+    body: {
       userId: string | number;
       cardId: string;
       amount: number;
@@ -294,7 +360,10 @@ export class CardOrchestratorServiceController {
       amount?: number;
     },
   ) {
-    return this.cardOrchestratorServiceService.updateTransactionStatus(Number(transactionId), body);
+    return this.cardOrchestratorServiceService.updateTransactionStatus(
+      Number(transactionId),
+      body,
+    );
   }
 
   @Get('transactions/:userId/:cardId')
@@ -314,7 +383,7 @@ export class CardOrchestratorServiceController {
           id: 1,
           userId: 'user123',
           cardId: '6614a2f3c9b1234567890abc',
-          amount: 20.00,
+          amount: 20.0,
           transactionType: 'top_up',
           status: 'success',
         },
@@ -325,6 +394,9 @@ export class CardOrchestratorServiceController {
     @Param('userId') userId: string,
     @Param('cardId') cardId: string,
   ) {
-    return this.cardOrchestratorServiceService.getTransactionsRecords(userId, cardId);
+    return this.cardOrchestratorServiceService.getTransactionsRecords(
+      userId,
+      cardId,
+    );
   }
 }
