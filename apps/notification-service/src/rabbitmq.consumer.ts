@@ -1,13 +1,14 @@
-import * as amqp from 'amqplib';
+import amqp from 'amqplib';
+import type { Channel, Connection, ConsumeMessage } from 'amqplib';
 
-export async function startNotificationConsumer() {
+export async function startNotificationConsumer(): Promise<void> {
   const rabbitmqUrl =
     process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672';
   const exchange = process.env.RABBITMQ_EXCHANGE || 'card.topic';
   const queue = process.env.RABBITMQ_QUEUE || 'notification.queue';
 
-  const connection = await amqp.connect(rabbitmqUrl);
-  const channel = await connection.createChannel();
+  const connection: Connection = await amqp.connect(rabbitmqUrl);
+  const channel: Channel = await connection.createChannel();
 
   await channel.assertExchange(exchange, 'topic', { durable: true });
   await channel.assertQueue(queue, { durable: true });
@@ -18,10 +19,10 @@ export async function startNotificationConsumer() {
 
   console.log('[NotificationService] Waiting for messages...');
 
-  channel.consume(queue, (msg) => {
+  await channel.consume(queue, (msg: ConsumeMessage | null) => {
     if (!msg) return;
 
-    const content = JSON.parse(msg.content.toString());
+    const content: unknown = JSON.parse(msg.content.toString());
     console.log('[NotificationService] Received event:', content);
 
     channel.ack(msg);

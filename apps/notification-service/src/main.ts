@@ -4,7 +4,7 @@ import { startNotificationConsumer } from './rabbitmq.consumer';
 
 async function bootstrap() {
   const app = await NestFactory.create(NotificationServiceModule);
-  await app.listen(process.env.PORT ?? 3002);
+  await app.listen(process.env.PORT ?? 3006);
 
   await startNotificationConsumer();
 }
